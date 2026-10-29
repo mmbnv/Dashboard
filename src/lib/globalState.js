@@ -1,5 +1,4 @@
 
-import { pre } from "framer-motion/client";
 import { create } from "zustand";
 
 export const database = create((set, get) => ({
@@ -33,6 +32,18 @@ export const database = create((set, get) => ({
       city:"",
       position:{
         x:150, y:250,
+      }
+    },
+    "taskWid":{
+      isVisible:true,
+      position:{
+        x:520, y:40
+      }
+    },
+    "notesWid":{
+      isVisible:true,
+      position:{
+        x:520, y:320
       }
     },
     "quickAcSetting":{
@@ -102,7 +113,7 @@ export const database = create((set, get) => ({
   }
 }));
 
-export const Apps = create((set, get) => ({
+export const Apps = create((set) => ({
   array: [
   // AI
         {
@@ -514,7 +525,21 @@ export const Apps = create((set, get) => ({
             array: newList
         };
     });
-}
+},
+
+    removeApp: (url) => {
+        set((state) => {
+            const newList = state.array.filter(app => app.url !== url);
+
+            if (typeof chrome !== "undefined" && chrome.storage) {
+                chrome.storage.local.set({ appList: newList }, () => console.log("Saved"));
+            } else {
+                localStorage.setItem("appList", JSON.stringify(newList));
+            }
+
+            return { array: newList };
+        });
+    }
 
 }));
 

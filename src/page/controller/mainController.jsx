@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { toggler } from "../../lib/globalToggles"
-import { icons } from "lucide-react";
 
-export default function Controller({settings}) {
+export default function Controller() {
     const [toggleTool, setTT] = useState(false);
     let {toggleTab} = toggler();
     const handleBg = ()=>{
@@ -10,6 +9,7 @@ export default function Controller({settings}) {
     }
     const items = [
         { icon: "bx-edit", onClick: () => toggleTab({ toggleEdit: true }) },
+        { icon: "bx-task", onClick: () => toggleTab({ toggleTasks: true }) },
         { icon: "bxl-github", onClick: () => window.open("https://github.com/Freak644", "_blank") },
         { icon: "bx-image", onClick: handleBg },
         { icon: "bxs-bookmark-heart", onClick: () => toggleTab({toggleBookmarks:true})},

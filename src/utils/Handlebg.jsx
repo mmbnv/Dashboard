@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
-import {motion, scale} from 'framer-motion';
+// eslint-disable-next-line no-unused-vars -- used as <motion.div> in JSX
+import {motion} from 'framer-motion';
 import {toast} from 'react-toastify';
 import {useDropzone} from 'react-dropzone';
 import {Upload} from 'lucide-react';

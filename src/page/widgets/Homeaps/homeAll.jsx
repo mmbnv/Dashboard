@@ -8,7 +8,7 @@ export default function AllAps() {
     const [frequentlyArr, setArr] = useState([]);
 
     const handleClick = url => {
-        window.location.href=url;
+        window.location.assign(url);
     }
 
     const getWebsiteName = (url) => {
@@ -35,6 +35,7 @@ export default function AllAps() {
 
     useEffect(()=>{
         if (isFrequently) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- async top-sites load
             fetchTopSites();
         }
     },[isFrequently]);

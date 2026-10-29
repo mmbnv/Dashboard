@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { database } from "../../../lib/globalState"
-import { toggler } from "../../../lib/globalToggles"
 
 export default function SearchBar() {
-    const {username} = database(stat=> stat.db.name);
+    const {username, isVisible} = database(stat=> stat.db.name);
     let {setDB} = database();
     const [isEdit,setEdit] = useState(false);
     
@@ -51,7 +50,7 @@ export default function SearchBar() {
              { isEdit ? <form action="" className="absolute! top-0!" onSubmit={handle}>
                 <input autoComplete="off" type="text" name="newName" placeholder="Enter your nickname" />
              </form> :
-             <p id="greet">Wellcome! <span className="neonTxt">{username}</span> { username === "John Deo" && <i onClick={()=> setEdit(true)} className="bx bx-pencil cursor-pointer"></i>}</p>
+             <p id="greet">{isVisible && <>Wellcome! <span className="neonTxt">{username}</span> { username === "John Deo" && <i onClick={()=> setEdit(true)} className="bx bx-pencil cursor-pointer"></i>}</>}</p>
              }
              <form action="" onSubmit={handleSearch}>
                  <input autoComplete="off" type="text" name="query" placeholder="Find or Enter URL" />

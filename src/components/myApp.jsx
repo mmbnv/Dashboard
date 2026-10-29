@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import NewTab from "../page/newTab";
 import { Apps, database } from "../lib/globalState";
+import { useTaskStore } from "../lib/tasksStore";
+import { useNotesStore } from "../lib/notesStore";
 import '../assets/style/pasesTwo.css'
 
 
@@ -9,7 +11,12 @@ export default function MyApp() {
     const crntTheme = database(stat=>stat.db.quickAcSetting.crntTheme);
     let {setApp} = Apps();
     let [isReady, setReady] = useState(false);
+    const hydrateTasks = useTaskStore(stat => stat.hydrate);
+    const hydrateNotes = useNotesStore(stat => stat.hydrate);
+
     useEffect(() => {
+            Promise.all([hydrateTasks(), hydrateNotes()]);
+
             if (typeof chrome !== "undefined" && chrome.storage?.local) {
                 chrome.storage.local.get(["db", "appList"], (data) => {
 

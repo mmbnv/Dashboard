@@ -1,5 +1,4 @@
 import { useState } from "react"
-import { database } from "../../../../../lib/globalState";
 import { toast } from "react-toastify";
 
 export default  function WeatherAPI({setData}) {

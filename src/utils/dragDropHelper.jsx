@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars -- used as <motion.div> in JSX
 import { motion, useDragControls } from "framer-motion";
 
 export default function DraggableWidget({
