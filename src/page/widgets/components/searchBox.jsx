@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { database } from "../../../lib/globalState"
+import { recordVisit } from "../../../lib/platform"
 
 export default function SearchBar() {
     const {username, isVisible} = database(stat=> stat.db.name);
@@ -30,19 +31,22 @@ export default function SearchBar() {
 
         // Already has http:// or https://
         if (/^https?:\/\//i.test(query)) {
-            window.location.href = query;
+            recordVisit(query);
+            window.location.assign(query);
             return;
         }
 
         // Looks like a domain
         if (/^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+([/?#].*)?$/.test(query)) {
-            window.location.href = `https://${query}`;
+            const url = `https://${query}`;
+            recordVisit(url);
+            window.location.assign(url);
             return;
         }
 
         // Otherwise, Google search
         const encode = encodeURIComponent(query);
-        window.location.href = `https://www.google.com/search?q=${encode}`;
+        window.location.assign(`https://www.google.com/search?q=${encode}`);
     }
 
     return(  

@@ -1,5 +1,6 @@
 
 import { create } from "zustand";
+import { storageSet } from "./platform";
 
 export const database = create((set, get) => ({
   db: {
@@ -99,13 +100,7 @@ export const database = create((set, get) => ({
     })
     // Save the FULL DB
     if (!isGet) {
-      if (typeof chrome !== "undefined" && chrome.storage) {
-        chrome.storage.local.set({ db: newDb }, () => {
-          console.log("Saved");
-        });
-      } else {
-        localStorage.setItem("Saved", JSON.stringify(newDb));
-      }
+      storageSet({ db: newDb });
     }
     //console.log(newDb)
 
@@ -508,17 +503,7 @@ export const Apps = create((set) => ({
         const newList = [...state.array, ...uniqueApps];
 
         if (!isGet) {
-            if (typeof chrome !== "undefined" && chrome.storage) {
-                chrome.storage.local.set(
-                    { appList: newList },
-                    () => console.log("Saved")
-                );
-            } else {
-                localStorage.setItem(
-                    "appList",
-                    JSON.stringify(newList)
-                );
-            }
+            storageSet({ appList: newList });
         }
 
         return {
@@ -531,11 +516,7 @@ export const Apps = create((set) => ({
         set((state) => {
             const newList = state.array.filter(app => app.url !== url);
 
-            if (typeof chrome !== "undefined" && chrome.storage) {
-                chrome.storage.local.set({ appList: newList }, () => console.log("Saved"));
-            } else {
-                localStorage.setItem("appList", JSON.stringify(newList));
-            }
+            storageSet({ appList: newList });
 
             return { array: newList };
         });

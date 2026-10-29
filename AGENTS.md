@@ -1,17 +1,34 @@
 # AGENTS.md — Glassy Dashboard
 
-Manifest V3 browser extension (React 19 + Vite 7 + Zustand + Tailwind 4 + framer-motion)
-that replaces the New Tab page with a customizable widget dashboard.
+Glassy Dashboard (React 19 + Vite 7 + Zustand + Tailwind 4 + framer-motion).
+Ships as a Manifest V3 extension that overrides the New Tab page **and** as a
+standalone installable web app (PWA) — see *Two runtime targets* below.
 
 ## Commands
 
+- `npm install` — required before anything else; `npm run build` calls `vite` from
+  `node_modules/.bin`, so a missing install shows up as "vite is not recognized".
 - `npm run dev` — Vite dev server (config sets port 3221, `host: true`, `allowedHosts: true`).
   For remote/preview hosts run `npx vite --port <port> --host 0.0.0.0` and use the mapped URL.
-- `npm run build` — production build into `dist/`.
+- `npm run build` — production build into `dist/` (also emits `sw.js` + `manifest.webmanifest`).
+- `npm run preview` / `npm run app` — serve the built output on port 4173.
 - `npx eslint .` — lint. There is no test runner in this repo.
+
+## Two runtime targets
+
+The same bundle runs as an MV3 extension and as a standalone installable web app.
+`src/lib/platform.js` is the only module allowed to touch `chrome.*`; it detects the
+extension via `chrome.runtime.id` and falls back to `localStorage` (plus a local
+bookmark store and a visit counter) in the web build. Add new browser integrations
+there with a web fallback rather than branching on `chrome` inside components.
+
+- Extension: load **`dist/`** via *Load unpacked* — `manifest.json` is only in `dist/`
+  after a build, never in the project root.
+- Standalone: `npm run app`, then use the browser's install prompt for its own window.
 
 ## Architecture
 
+- `src/lib/platform.js` — environment boundary: storage, bookmarks, top sites, SW registration.
 - `src/lib/globalState.js` — Zustand stores. `database` holds `db`, the per-widget config
   (each widget has `{isVisible, ...}`); `Apps` holds the quick-access app array.
   `setDB({data, isGet})` merges a partial patch into `db` and persists it; pass `isGet: true`
