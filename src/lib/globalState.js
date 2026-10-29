@@ -1,6 +1,6 @@
 
-import { pre } from "framer-motion/client";
 import { create } from "zustand";
+import { storageSet } from "./platform";
 
 export const database = create((set, get) => ({
   db: {
@@ -33,6 +33,18 @@ export const database = create((set, get) => ({
       city:"",
       position:{
         x:150, y:250,
+      }
+    },
+    "taskWid":{
+      isVisible:true,
+      position:{
+        x:520, y:40
+      }
+    },
+    "notesWid":{
+      isVisible:true,
+      position:{
+        x:520, y:320
       }
     },
     "quickAcSetting":{
@@ -88,13 +100,7 @@ export const database = create((set, get) => ({
     })
     // Save the FULL DB
     if (!isGet) {
-      if (typeof chrome !== "undefined" && chrome.storage) {
-        chrome.storage.local.set({ db: newDb }, () => {
-          console.log("Saved");
-        });
-      } else {
-        localStorage.setItem("Saved", JSON.stringify(newDb));
-      }
+      storageSet({ db: newDb });
     }
     //console.log(newDb)
 
@@ -102,7 +108,7 @@ export const database = create((set, get) => ({
   }
 }));
 
-export const Apps = create((set, get) => ({
+export const Apps = create((set) => ({
   array: [
   // AI
         {
@@ -497,24 +503,24 @@ export const Apps = create((set, get) => ({
         const newList = [...state.array, ...uniqueApps];
 
         if (!isGet) {
-            if (typeof chrome !== "undefined" && chrome.storage) {
-                chrome.storage.local.set(
-                    { appList: newList },
-                    () => console.log("Saved")
-                );
-            } else {
-                localStorage.setItem(
-                    "appList",
-                    JSON.stringify(newList)
-                );
-            }
+            storageSet({ appList: newList });
         }
 
         return {
             array: newList
         };
     });
-}
+},
+
+    removeApp: (url) => {
+        set((state) => {
+            const newList = state.array.filter(app => app.url !== url);
+
+            storageSet({ appList: newList });
+
+            return { array: newList };
+        });
+    }
 
 }));
 

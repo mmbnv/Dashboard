@@ -1,9 +1,19 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toggler } from "../../../lib/globalToggles";
+import {
+    addBookmark,
+    getBookmarkTree,
+    importBookmarksHtml,
+    isExtension,
+    removeBookmark,
+} from "../../../lib/platform";
+import { toast } from "react-toastify";
 
 export default function BookmarkList() {
     const [bookList, setList] = useState({});
     const [search, setSearch] = useState("");
+    const [isAdding, setAdding] = useState(false);
+    const fileInput = useRef(null);
     const { toggleTab } = toggler();
 
     function groupBookmarks(nodes, folder = "Bookmarks", result = {}) {
@@ -58,7 +68,7 @@ export default function BookmarkList() {
 
     const loadBookmarks = async () => {
         try {
-            const tree = await chrome.bookmarks.getTree();
+            const tree = await getBookmarkTree();
             setList(groupBookmarks(tree));
         } catch (err) {
             console.error(err);
@@ -66,12 +76,13 @@ export default function BookmarkList() {
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async bookmarks load
         loadBookmarks();
     }, []);
 
     async function deleteBookmark(id) {
         try {
-            await chrome.bookmarks.remove(id);
+            await removeBookmark(id);
 
             setList(prev => {
                 const updated = { ...prev };
@@ -92,6 +103,39 @@ export default function BookmarkList() {
             console.error(err);
         }
     }
+
+    const handleAdd = async (evnt) => {
+        evnt.preventDefault();
+        const { title, url } = Object.fromEntries(new FormData(evnt.target));
+
+        if (!url?.trim()) return;
+
+        try {
+            await addBookmark({ title: title?.trim(), url: url.trim() });
+            setAdding(false);
+            toast.success("Bookmark added");
+            loadBookmarks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Could not add bookmark");
+        }
+    };
+
+    const handleImport = async (evnt) => {
+        const file = evnt.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const added = await importBookmarksHtml(await file.text());
+            toast.success(`Imported ${added} bookmark${added === 1 ? "" : "s"}`);
+            loadBookmarks();
+        } catch (err) {
+            console.error(err);
+            toast.error("Import failed");
+        } finally {
+            evnt.target.value = "";
+        }
+    };
 
     const getIcon = (url) =>
     `https://www.google.com/s2/favicons?sz=512&domain_url=${encodeURIComponent(url)}`;
@@ -138,7 +182,59 @@ export default function BookmarkList() {
 
                     </div>
 
+                    {!isExtension && (
+                        <>
+                            <button
+                                onClick={() => setAdding((prev) => !prev)}
+                                title="Add bookmark"
+                                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/10 transition"
+                            >
+                                <i className="bx bx-plus text-2xl text-white"></i>
+                            </button>
+
+                            <button
+                                onClick={() => fileInput.current?.click()}
+                                title="Import browser bookmarks (HTML)"
+                                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/10 transition"
+                            >
+                                <i className="bx bx-import text-2xl text-white"></i>
+                            </button>
+
+                            <input
+                                ref={fileInput}
+                                type="file"
+                                accept=".html,text/html"
+                                onChange={handleImport}
+                                className="hidden"
+                            />
+                        </>
+                    )}
+
                 </div>
+
+                {isAdding && (
+                    <form
+                        onSubmit={handleAdd}
+                        className="flex items-center gap-2 px-4 pb-4"
+                    >
+                        <input
+                            name="title"
+                            placeholder="Title (optional)"
+                            className="h-11 flex-1 rounded-xl px-4 bg-white/5 border border-white/10 outline-none text-white placeholder:text-zinc-500 focus:border-violet-500"
+                        />
+                        <input
+                            name="url"
+                            placeholder="https://example.com"
+                            className="h-11 flex-1 rounded-xl px-4 bg-white/5 border border-white/10 outline-none text-white placeholder:text-zinc-500 focus:border-violet-500"
+                        />
+                        <button
+                            type="submit"
+                            className="h-11 px-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm"
+                        >
+                            Save
+                        </button>
+                    </form>
+                )}
 
             </div>
 

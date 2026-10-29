@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react"
-import { database } from "../../../lib/globalState";
 
 export default function WeatherColtroller ({crntData, setData}) {
     let {weatherWid} = crntData;
@@ -24,7 +23,7 @@ export default function WeatherColtroller ({crntData, setData}) {
         }
     
         useEffect(()=>{
-            if (!cityInputRef || cityInputRef=== null || !keyInputRef || !keyInputRef === null) return;
+            if (!cityInputRef.current || !keyInputRef.current) return;
             let cityInp = cityInputRef.current;
             let keyInp = keyInputRef.current
             

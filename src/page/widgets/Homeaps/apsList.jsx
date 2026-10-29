@@ -1,16 +1,23 @@
 import { useEffect, useState } from "react";
 import { Apps } from "../../../lib/globalState";
-import { useScroll } from "framer-motion";
+import { toast } from "react-toastify";
 import InstallApp from "./AddNew";
 
 export default function AppList () {
     const AllApps = Apps(stat=> stat.array) || [];
+    const removeApp = Apps(stat=> stat.removeApp);
     const [myApps,setApps] = useState([]);
     const [inputVal,setVal] = useState("");
     const [isNew,setNew] = useState(false);
+    const [isRemove,setRemove] = useState(false);
 
-    const handleClick = url => {
-        window.location.href=url;
+    const handleClick = (app) => {
+        if (isRemove) {
+            removeApp(app.url);
+            toast.success(`Removed ${app.name}`);
+            return;
+        }
+        window.location.assign(app.url);
     }
 
     useEffect(()=>{
@@ -23,10 +30,6 @@ export default function AppList () {
         app.name.toLowerCase().startsWith(value.toLowerCase())
       );
       setApps(filterList)
-    }
-
-    const SetDefault =  () => {
-      setApps(AllApps);
     }
 
     useEffect(()=> {
@@ -89,7 +92,7 @@ export default function AppList () {
       flex items-center flex-col gap-2.5 p-2.5">
         <ul className="flex items-strat flex-col gap-2.5 mt-1.5">
           <li onClick={()=>setNew(true)} className="border-b flex items-center justify-start text-gray-600 cursor-pointer"> <i className="bx bxl-android"></i> NewApps</li>
-          <li className="border-b flex items-center justify-start text-gray-600 cursor-pointer"> <i className="bx bxs-trash"></i> Remove</li>
+          <li onClick={()=>setRemove(prev=>!prev)} className={`border-b flex items-center justify-start cursor-pointer ${isRemove ? "text-rose-400" : "text-gray-600"}`}> <i className="bx bxs-trash"></i> {isRemove ? "Done" : "Remove"}</li>
         </ul>
       </div>
     </div>
@@ -100,7 +103,7 @@ export default function AppList () {
             {
                 myApps.map((app,index)=>(
                 <div key={index} className="flex items-center flex-col gap-1.5 h-17 w-14 m-2">
-                    <div onClick={()=>handleClick(app.url)} title={app?.name} className="allApps cursor-pointer flex hover:scale-105 items-center justify-center h-13 w-13 rounded-lg border border-cyan-400/30 bg-yellow-500/15">
+                    <div onClick={()=>handleClick(app)} title={isRemove ? `Remove ${app?.name}` : app?.name} className={`allApps cursor-pointer flex hover:scale-105 items-center justify-center h-13 w-13 rounded-lg border bg-yellow-500/15 ${isRemove ? "border-rose-500/70 animate-pulse" : "border-cyan-400/30"}`}>
                         <img src={getIcon(app.url)} className="h-4/5! w-4/5!" alt="" />
                     </div>
                     <span className="text-[8px]">{app.name}</span>
