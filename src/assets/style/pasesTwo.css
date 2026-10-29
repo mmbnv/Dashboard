@@ -1,0 +1,392 @@
+.liquedBtn {
+    border: 4px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px 4px;
+    cursor: pointer;
+    display: flex;
+    width: 100px;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    font-size: medium;
+    font-weight: 500;
+    box-shadow: inset 0px 0px 0 rgba(255, 0, 0, 0.736);
+    overflow: hidden;
+
+    &:hover {
+        box-shadow: inset 110px 0 0 0 rgb(63, 180, 0) ;
+        color: rgb(255, 255, 255) !important;
+    }
+}
+
+
+
+.moverDiv {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: larger;
+
+    i{
+        border-radius: 5px;
+        padding: 3px;
+        border: 2px solid rgba(255,255,255,0.4);
+        opacity: .7;
+        
+        &:hover{
+            opacity: 1;
+            cursor: pointer;
+        }
+    }
+}
+
+.loader {
+    height: 70px; width: 70px;
+    position: relative;
+    border-radius: 50%;
+    border: 6px solid rgba(128, 128, 128, 0.5);
+    display: grid;
+    place-items: center;
+    animation: miniLoader 3s infinite;
+}
+
+.loader::after,
+.loader::before {
+    content: '';
+    border-radius: 50%;
+    border: 6px solid transparent;
+    grid-area: 1/1;
+    animation: miniLoader 3s infinite; 
+    position: absolute;
+    inset: -5px;
+}
+
+.loader::after {
+    border-color: rgba(183, 0, 255, 0.608) transparent transparent;
+    animation-direction: alternate-reverse;
+}
+
+.loader::before {
+    border-color: rgba(255, 191, 0, 0.736) transparent transparent;
+}
+
+@keyframes miniLoader {
+    100%{transform: rotate(1turn);}
+}
+
+.temp{
+    border: 1px solid white;
+}
+
+.inCommingAnim {
+  opacity: 0;
+  transform: perspective(800px) translateX(-100%) rotateY(-30deg) scale(0.2);
+  animation: macIn 0.7s ease forwards;
+}
+
+@keyframes macIn {
+  100% {
+    opacity: 1;
+    transform: perspective(800px) translateX(0) rotateY(0) scale(1);
+  }
+}
+
+.outAnim {
+    transform: perspective(800px) translateX(-100%) rotateY(-30deg) scale(0.2);
+}
+
+#shortBy{
+    background: rgba(0, 2, 20, 0.627);
+
+  
+    border: 1px solid #444;
+    padding-left: 20px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.myShadow {
+    box-shadow: 0 0 5px 5px rgba(98, 104, 152, 0.627);
+}
+
+.allApps{
+     transition: all .2s ease-in !important;
+     &:hover {
+        transform: translateY(-8px);
+     }
+}
+
+.miniIconDiv {
+    transition: all .5s !important;
+    &:hover{
+        transform: scale(1.1);
+        i {
+            transform: rotate(90deg);
+        }
+    }
+}
+
+.dropContainer {
+    .dropMenu {
+        transform: translateY(-20px);
+        opacity: 0;
+        transition: .4s ease-in-out;
+    }
+
+    &:hover {
+        .dropMenu {
+            transform: translateY(10px);
+            opacity: 1;
+        }
+    }
+}
+
+.setingIcon:hover>i {
+    transform: rotate(90deg);
+}
+
+.cameIn {
+    animation: forwardAnim .5s forwards;
+}
+
+@keyframes forwardAnim {
+    from{
+        right: -15px;
+    }
+    to {
+        right: 0px;
+        opacity: 1;
+    }
+}
+
+.controllerContainer {
+    height: auto;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid rgba(69, 100, 102, 0.31);
+    border-radius: 10px;
+    background: rgba(33, 4, 53, 0.27);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+.neonTxt {
+    background: linear-gradient(
+        136deg,
+        #7c3aed,
+        #8b5cf6,
+        #3b82f6,
+        #06b5d48d,
+        #22d3eea7,
+        #06b5d491,
+        #3b82f6,
+        #8b5cf6
+    );
+
+    background-size: 200% auto;
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+
+    animation: gradientFlow 30s linear infinite;
+}
+
+@keyframes gradientFlow {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 200% 50%;
+    }
+}
+
+.controlleBox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 45px;
+    border-bottom: 1px solid rgba(200, 200, 200, 0.1) ;
+    border-radius: 10px;
+    
+    .leftaSideC {
+        display: flex;
+        align-items: start;
+        flex-direction: row;
+        width: 70%;
+        height: 100%;
+        gap: 5px;
+        .iconCon{
+            width: 30px;
+            height: 30PX;
+            border-radius: 10PX;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(157, 58, 0, 0.088);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .textHolder{
+            display: flex;
+            align-items: start;
+            height: 100%;
+            width: 200px;
+
+            flex-direction: column;
+            p {
+                font-size: 12px;
+                font-weight: 400;
+            }
+            span {
+                font-size: 10px;
+                color: rgba(255, 255, 255, 0.5)
+            }
+        }
+
+    }
+
+    .rightaSideC {
+        display: flex;
+        align-items: center;
+        width: 25%;
+        height: 100%;
+     
+        justify-content: end;
+
+        button {
+            width: 40px;
+            height: 20px;
+            background-color: rgba(35, 25, 47, 0.738);
+            border-radius: 15px;
+            padding: 2px;
+            cursor: pointer;
+            border: 1px solid rgba(64, 125, 154, 0.352);
+            p {
+                height: 15px;
+                width: 15px;
+                border-radius: 50%;
+                background: white;
+                transition: all .3s ease-in-out;
+                box-shadow: 0px 0px 5px 0px black;
+            }
+        }
+    }
+
+    &:hover {
+        background: linear-gradient(90deg, transparent ,rgba(0,20,250,0.2), rgba(10,20, 250, .3));
+    }
+}
+
+.rightaSideC.Active {
+    button {
+        background-color: rgb(29, 190, 0);
+
+        p {
+            transform: translateX(20px);
+            background: rgb(247, 247, 247);
+        }
+    }
+}
+
+.inputDiv {
+    display: flex;
+    align-items: center;
+    height: 35px;
+    width: 100%;
+    position: relative;
+
+    input {
+        all: unset;
+        border: 2px solid rgba(128, 128, 128, 0.479);
+        border-radius: 10px;
+        width: 100%;
+        padding-left: 10px;
+        padding-right: 10px;
+        height: 30px;
+    }
+
+    button {
+        position: absolute;
+        padding: 6px;
+        font-size: 10px;
+        background-color: #43b13dd4;
+        color: white;
+        border-radius: 8px;
+        right: 0px;
+    }
+}
+
+.inputDiv input:focus {
+    border-color: blue;
+}
+
+.inputDivBtn {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    height: 40px;
+    width: 100%;
+    gap: 5px;
+
+    input {
+        all: unset;
+        border: 2px solid rgba(128, 128, 128, 0.479);
+        border-radius: 10px;
+        width: 70%;
+        padding-left: 10px;
+        padding-right: 10px;
+        height: 30px;
+    }
+
+    input::placeholder {
+        color:gray ;
+    }
+
+    button {
+        height: 90%;
+        width: 30%;
+        background-color: blue;
+        font-weight: bold;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+}
+.headingP {
+    padding: 4px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.34);
+    width: 100%;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.controlleBoxA {
+    height: 90px;
+    width: 100%;
+    background: linear-gradient(136deg, rgba(132, 132, 132, 0.21), rgba(33, 20, 37, 0.259), rgba(54, 3, 41, 0.912));
+    border-radius: 10px;
+   
+}
+
+.finalDiv{
+    font-size: 14px;
+    word-wrap: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    p{
+        color: gray;
+    }
+}
