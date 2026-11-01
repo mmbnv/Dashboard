@@ -47,8 +47,9 @@ def main(argv=None):
         fallback = QApplication.instance() or QApplication(argv)
         QMessageBox.critical(
             None,
-            f"{APP_NAME} could not start",
-            f"{exc}\n\nSet GLASSY_LEDGER_HOME to a writable folder and retry.",
+            f"Не удалось запустить {APP_NAME}",
+            f"{exc}\n\nУкажите доступную для записи папку в переменной "
+            "GLASSY_LEDGER_HOME и повторите попытку.",
         )
         del fallback
         return 1

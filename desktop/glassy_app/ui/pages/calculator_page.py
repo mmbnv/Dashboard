@@ -17,11 +17,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import terms
 from ...core import calculator, money
 from ...core.errors import AppError
 from ..base_page import BasePage
 from ..dialogs import show_error
-from ..widgets.common import Card, SectionHeader, clear_layout
+from ..widgets.common import Card, SectionHeader, clear_layout, title_label
 
 BUTTONS = [
     ["C", "(", ")", "\u00f7"],
@@ -33,17 +34,17 @@ BUTTONS = [
 
 
 class CalculatorPage(BasePage):
-    title = "Calculator"
-    subtitle = "Arithmetic, percentages and loan payments"
+    title = terms.SECTION_TITLES["calculator"]
+    subtitle = terms.SECTION_SUBTITLES["calculator"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
         self.add(self.header)
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_basic_tab(), "Calculator")
-        self.tabs.addTab(self._build_percent_tab(), "Percentages")
-        self.tabs.addTab(self._build_loan_tab(), "Loan")
+        self.tabs.addTab(self._build_basic_tab(), "Вычисления")
+        self.tabs.addTab(self._build_percent_tab(), "Проценты")
+        self.tabs.addTab(self._build_loan_tab(), "Кредит")
         self.add(self.tabs)
         self.history = []
 
@@ -56,7 +57,7 @@ class CalculatorPage(BasePage):
 
         left = Card()
         self.expression = QLineEdit()
-        self.expression.setPlaceholderText("Type an expression, e.g. (1200+350)*1.2")
+        self.expression.setPlaceholderText("Введите выражение, например (1200+350)*1.2")
         self.expression.setStyleSheet("font-size: 18px; padding: 12px;")
         self.expression.returnPressed.connect(self._evaluate)
         left.body().addWidget(self.expression)
@@ -82,8 +83,8 @@ class CalculatorPage(BasePage):
         left.body().addLayout(grid)
 
         hint = QLabel(
-            "Functions: sqrt, log, sin, cos, abs, round, min, max. "
-            "Constants: pi, e."
+            "Функции: sqrt, log, sin, cos, abs, round, min, max. "
+            "Константы: pi, e."
         )
         hint.setObjectName("Muted")
         hint.setWordWrap(True)
@@ -92,11 +93,11 @@ class CalculatorPage(BasePage):
         layout.addWidget(left, 3)
 
         right = Card()
-        right.body().addWidget(_title("History"))
+        right.body().addWidget(title_label("История"))
         self.history_list = QListWidget()
         self.history_list.itemDoubleClicked.connect(self._reuse_history)
         right.body().addWidget(self.history_list, 1)
-        clear_history = QPushButton("Clear history")
+        clear_history = QPushButton("Очистить историю")
         clear_history.setObjectName("Ghost")
         clear_history.clicked.connect(self._clear_history)
         right.body().addWidget(clear_history)
@@ -118,9 +119,9 @@ class CalculatorPage(BasePage):
         try:
             value = calculator.evaluate(self.expression.text())
         except AppError as exc:
-            self.result.setText("error")
+            self.result.setText("ошибка")
             self.result.setStyleSheet("color: #ef4444;")
-            show_error(self, str(exc), title="Cannot calculate")
+            show_error(self, str(exc), title="Не удалось вычислить")
             return
         text = calculator.format_result(value)
         self.result.setText(text)
@@ -145,18 +146,18 @@ class CalculatorPage(BasePage):
         layout.setSpacing(12)
 
         card = Card()
-        card.body().addWidget(_title("Percent of a number"))
+        card.body().addWidget(title_label("Процент от числа"))
         row = QHBoxLayout()
         self.pct_of_base = QLineEdit("1000")
-        self.pct_of_base.setPlaceholderText("Number")
+        self.pct_of_base.setPlaceholderText("Число")
         self.pct_of_value = QLineEdit("15")
-        self.pct_of_value.setPlaceholderText("Percent")
-        compute = QPushButton("Calculate")
+        self.pct_of_value.setPlaceholderText("Процент")
+        compute = QPushButton("Вычислить")
         compute.setObjectName("Primary")
         compute.clicked.connect(self._percent_of)
-        row.addWidget(QLabel("Number"))
+        row.addWidget(QLabel("Число"))
         row.addWidget(self.pct_of_base)
-        row.addWidget(QLabel("Percent %"))
+        row.addWidget(QLabel("Процент %"))
         row.addWidget(self.pct_of_value)
         row.addWidget(compute)
         card.body().addLayout(row)
@@ -166,16 +167,16 @@ class CalculatorPage(BasePage):
         layout.addWidget(card)
 
         card2 = Card()
-        card2.body().addWidget(_title("Percentage change"))
+        card2.body().addWidget(title_label("Изменение в процентах"))
         row2 = QHBoxLayout()
         self.change_from = QLineEdit("100")
         self.change_to = QLineEdit("150")
-        compute2 = QPushButton("Calculate")
+        compute2 = QPushButton("Вычислить")
         compute2.setObjectName("Primary")
         compute2.clicked.connect(self._percent_change)
-        row2.addWidget(QLabel("From"))
+        row2.addWidget(QLabel("Было"))
         row2.addWidget(self.change_from)
-        row2.addWidget(QLabel("To"))
+        row2.addWidget(QLabel("Стало"))
         row2.addWidget(self.change_to)
         row2.addWidget(compute2)
         card2.body().addLayout(row2)
@@ -185,18 +186,18 @@ class CalculatorPage(BasePage):
         layout.addWidget(card2)
 
         card3 = Card()
-        card3.body().addWidget(_title("Split a bill"))
+        card3.body().addWidget(title_label("Разделить счёт"))
         row3 = QHBoxLayout()
         self.bill_total = QLineEdit("1000")
         self.bill_people = QSpinBox()
         self.bill_people.setRange(1, 100)
         self.bill_people.setValue(2)
-        compute3 = QPushButton("Split")
+        compute3 = QPushButton("Разделить")
         compute3.setObjectName("Primary")
         compute3.clicked.connect(self._split_bill)
-        row3.addWidget(QLabel("Total"))
+        row3.addWidget(QLabel("Всего"))
         row3.addWidget(self.bill_total)
-        row3.addWidget(QLabel("People"))
+        row3.addWidget(QLabel("Человек"))
         row3.addWidget(self.bill_people)
         row3.addWidget(compute3)
         card3.body().addLayout(row3)
@@ -212,7 +213,7 @@ class CalculatorPage(BasePage):
             base = float(self.pct_of_base.text().replace(",", "."))
             pct = float(self.pct_of_value.text().replace(",", "."))
         except ValueError:
-            show_error(self, "Enter valid numbers.")
+            show_error(self, "Введите корректные числа.")
             return
         self.pct_of_result.setText(calculator.format_result(
             calculator.percent_of(base, pct)
@@ -223,7 +224,7 @@ class CalculatorPage(BasePage):
             old = float(self.change_from.text().replace(",", "."))
             new = float(self.change_to.text().replace(",", "."))
         except ValueError:
-            show_error(self, "Enter valid numbers.")
+            show_error(self, "Введите корректные числа.")
             return
         value = calculator.percent_change(old, new)
         if value == float("inf"):
@@ -244,7 +245,7 @@ class CalculatorPage(BasePage):
         text = money.format_amount(each, self.app.currency)
         if remainder:
             text += (
-                f"  (+{money.format_amount(remainder, self.app.currency)} left over)"
+                f"  (+{money.format_amount(remainder, self.app.currency)} остаток)"
             )
         self.bill_result.setText(text)
 
@@ -256,7 +257,7 @@ class CalculatorPage(BasePage):
         layout.setSpacing(12)
 
         card = Card()
-        card.body().addWidget(_title("Annuity loan payment"))
+        card.body().addWidget(title_label("Аннуитетный платёж"))
         form = QGridLayout()
         form.setSpacing(10)
 
@@ -266,14 +267,14 @@ class CalculatorPage(BasePage):
         self.loan_months.setRange(1, 600)
         self.loan_months.setValue(24)
 
-        form.addWidget(QLabel("Amount"), 0, 0)
+        form.addWidget(QLabel("Сумма"), 0, 0)
         form.addWidget(self.loan_amount, 0, 1)
-        form.addWidget(QLabel("Annual rate %"), 1, 0)
+        form.addWidget(QLabel("Ставка, % годовых"), 1, 0)
         form.addWidget(self.loan_rate, 1, 1)
-        form.addWidget(QLabel("Term (months)"), 2, 0)
+        form.addWidget(QLabel("Срок, месяцев"), 2, 0)
         form.addWidget(self.loan_months, 2, 1)
 
-        compute = QPushButton("Calculate")
+        compute = QPushButton("Вычислить")
         compute.setObjectName("Primary")
         compute.clicked.connect(self._compute_loan)
         form.addWidget(compute, 3, 0, 1, 2)
@@ -292,7 +293,7 @@ class CalculatorPage(BasePage):
             principal = float(money.to_minor(self.loan_amount.text())) / 100.0
             rate = float(self.loan_rate.text().replace(",", "."))
         except (AppError, ValueError) as exc:
-            show_error(self, str(exc) if str(exc) else "Enter valid numbers.")
+            show_error(self, str(exc) if str(exc) else "Введите корректные числа.")
             return
         try:
             payment, total, overpay = calculator.loan_payment(
@@ -303,10 +304,10 @@ class CalculatorPage(BasePage):
             return
         currency = self.app.currency
         for label, value in (
-            ("Monthly payment",
+            ("Ежемесячный платёж",
              money.format_amount(int(round(payment * 100)), currency)),
-            ("Total paid", money.format_amount(int(round(total * 100)), currency)),
-            ("Overpayment",
+            ("Всего выплат", money.format_amount(int(round(total * 100)), currency)),
+            ("Переплата",
              money.format_amount(int(round(overpay * 100)), currency)),
         ):
             row = QWidget()
@@ -323,8 +324,3 @@ class CalculatorPage(BasePage):
     def refresh(self):
         pass
 
-
-def _title(text):
-    label = QLabel(text)
-    label.setObjectName("SectionTitle")
-    return label

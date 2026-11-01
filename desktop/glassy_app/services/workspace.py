@@ -20,7 +20,7 @@ class WorkbookService:
     def get_entry(self, entry_id):
         row = self.entries.get(entry_id)
         if not row:
-            raise NotFoundError("Entry not found")
+            raise NotFoundError("Запись не найдена")
         return row
 
     def create_entry(self, title, body="", kind="note", tags="", pinned=False):
@@ -52,15 +52,15 @@ class WorkbookService:
         if self.entries.count() == 0:
             self.entries.create(
                 WorkbookEntry(
-                    title="Welcome to your workbook",
+                    title="Добро пожаловать в заметки",
                     body=(
-                        "Use this space for anything you want to keep: plans, "
-                        "checklists, meeting notes, or a daily log.\n\n"
-                        "Entries are saved the moment you press Save, and they "
-                        "live in the same local database as the rest of the app."
+                        "Здесь можно хранить что угодно: планы, списки дел, "
+                        "записи встреч или дневник.\n\n"
+                        "Запись сохраняется сразу после нажатия «Сохранить» и "
+                        "хранится в той же базе, что и остальные данные."
                     ),
                     kind="note",
-                    tags="start-here",
+                    tags="с-чего-начать",
                     pinned=True,
                 )
             )
@@ -79,7 +79,7 @@ class TaskService:
     def get_task(self, task_id):
         row = self.tasks.get(task_id)
         if not row:
-            raise NotFoundError("Task not found")
+            raise NotFoundError("Задача не найдена")
         return row
 
     def create_task(self, title, notes="", status="todo", priority="medium",
@@ -131,10 +131,10 @@ class TaskService:
         if self.tasks.count() == 0:
             self.tasks.create(
                 Task(
-                    title="Set up your first registry",
+                    title="Создайте первую таблицу",
                     notes=(
-                        "Open Registries and pick a template, for example "
-                        "Inventory or Meter readings."
+                        "Откройте раздел «Таблицы» и выберите шаблон, "
+                        "например «Инвентарь» или «Показания счётчиков»."
                     ),
                     priority="medium",
                 )

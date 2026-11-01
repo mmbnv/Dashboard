@@ -12,7 +12,7 @@ class BasePage(QWidget):
     always re-read from the database instead of going stale behind the UI.
     """
 
-    title = "Page"
+    title = "Раздел"
     subtitle = ""
 
     def __init__(self, app, parent=None):

@@ -113,7 +113,7 @@ def test_export_csv_has_header_and_rows(app):
     app.registries.add_record(registry_id, {"name": "Drill", "qty": "1"})
     csv_text = app.registries.export_csv(registry_id)
     lines = csv_text.strip().splitlines()
-    assert lines[0].startswith("Item,Qty")
+    assert lines[0].startswith("Название,Кол-во")
     assert "Drill" in lines[1]
 
 

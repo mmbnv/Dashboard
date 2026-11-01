@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import terms
 from ...core import money
 from ...core.models import INCOME
 from ..base_page import BasePage
@@ -20,16 +21,20 @@ from ..widgets.common import (
     SectionHeader,
     StatCard,
     TagLabel,
+    clear_layout,
+    muted_label,
+    title_label,
+    wrap,
 )
 
 
 class DashboardPage(BasePage):
-    title = "Dashboard"
-    subtitle = "Everything at a glance"
+    title = terms.SECTION_TITLES["dashboard"]
+    subtitle = terms.SECTION_SUBTITLES["dashboard"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
-        self.refresh_button = QPushButton("Refresh")
+        self.refresh_button = QPushButton("Обновить")
         self.refresh_button.setObjectName("Ghost")
         self.refresh_button.clicked.connect(self.refresh)
         self.header.add_action(self.refresh_button)
@@ -40,63 +45,64 @@ class DashboardPage(BasePage):
         self.kpi_row.setSpacing(12)
         self.kpi_cards = {}
         for key, title in (
-            ("net_worth", "Net worth"),
-            ("month_income", "Income this month"),
-            ("month_expense", "Spent this month"),
-            ("tasks", "Open tasks"),
+            ("net_worth", "Капитал"),
+            ("month_income", "Доход за месяц"),
+            ("month_expense", "Расходы за месяц"),
+            ("tasks", "Открытых задач"),
         ):
             card = StatCard(title)
             self.kpi_cards[key] = card
             self.kpi_row.addWidget(card)
-        self.add(_wrap(self.kpi_row))
+        self.add(wrap(self.kpi_row))
 
         # -- charts -----------------------------------------------------
         charts = QHBoxLayout()
         charts.setSpacing(12)
 
         cashflow_card = Card()
-        cashflow_card.add(_title("Cash flow, last 6 months"))
+        cashflow_card.add(title_label("Движение средств, 6 месяцев"))
         self.cashflow = BarChart()
         cashflow_card.add(self.cashflow)
         cashflow_card.add(
-            _legend([("Income", "#7c3aed"), ("Expense", "#f59e0b")])
+            _legend([(terms.KINDS["income"], "#7c3aed"),
+                     (terms.KINDS["expense"], "#f59e0b")])
         )
         charts.addWidget(cashflow_card, 3)
 
         spend_card = Card()
-        spend_card.add(_title("Spending by category"))
+        spend_card.add(title_label("Расходы по категориям"))
         self.donut = DonutChart()
         spend_card.add(self.donut)
         charts.addWidget(spend_card, 2)
-        self.add(_wrap(charts))
+        self.add(wrap(charts))
 
         # -- accounts + recent ------------------------------------------
         middle = QHBoxLayout()
         middle.setSpacing(12)
 
         accounts_card = Card()
-        accounts_card.add(_title("Accounts"))
+        accounts_card.add(title_label("Счета"))
         self.accounts_box = QVBoxLayout()
         self.accounts_box.setSpacing(8)
         accounts_card.body().addLayout(self.accounts_box)
         middle.addWidget(accounts_card, 2)
 
         recent_card = Card()
-        recent_card.add(_title("Recent transactions"))
+        recent_card.add(title_label("Последние операции"))
         self.recent_box = QVBoxLayout()
         self.recent_box.setSpacing(8)
         recent_card.body().addLayout(self.recent_box)
         middle.addWidget(recent_card, 3)
-        self.add(_wrap(middle))
+        self.add(wrap(middle))
 
         # -- module summary ---------------------------------------------
         summary = QGridLayout()
         summary.setSpacing(12)
-        self.learning_card = StatCard("Learning")
-        self.registry_card = StatCard("Registries")
-        self.workbook_card = StatCard("Workbook")
+        self.learning_card = StatCard(terms.SECTION_TITLES["learning"])
+        self.registry_card = StatCard(terms.SECTION_TITLES["registries"])
+        self.workbook_card = StatCard(terms.SECTION_TITLES["workbook"])
         self.budget_card = Card()
-        self.budget_card.add(_title("This month's budgets"))
+        self.budget_card.add(title_label("Бюджеты на месяц"))
         self.budget_box = QVBoxLayout()
         self.budget_box.setSpacing(6)
         self.budget_card.body().addLayout(self.budget_box)
@@ -104,7 +110,7 @@ class DashboardPage(BasePage):
         summary.addWidget(self.registry_card, 0, 1)
         summary.addWidget(self.workbook_card, 0, 2)
         summary.addWidget(self.budget_card, 1, 0, 1, 3)
-        self.add(_wrap(summary))
+        self.add(wrap(summary))
 
         self.add_stretch()
 
@@ -130,8 +136,8 @@ class DashboardPage(BasePage):
         tasks = data["tasks"]
         self.kpi_cards["tasks"].set_value(
             str(tasks["open"]),
-            hint=f"{tasks['overdue']} overdue" if tasks["overdue"] else
-                 f"{tasks['done']} done",
+            hint=f"просрочено: {tasks['overdue']}" if tasks["overdue"] else
+                 f"готово: {tasks['done']}",
         )
 
         # cash flow
@@ -141,7 +147,7 @@ class DashboardPage(BasePage):
                 [row["period"][5:] + "/" + row["period"][2:4] for row in series],
                 [row["income"] / 100.0 for row in series],
                 [row["expense"] / 100.0 for row in series],
-                "Income", "Expense",
+                terms.KINDS["income"], terms.KINDS["expense"],
             )
         else:
             self.cashflow.set_data([], [], [])
@@ -158,20 +164,20 @@ class DashboardPage(BasePage):
         self.donut.set_data(
             slices,
             money.format_amount(total_expense, currency, with_symbol=False),
-            "spent this month",
+            "израсходовано за месяц",
         )
 
         # accounts
-        _clear(self.accounts_box)
+        clear_layout(self.accounts_box)
         accounts = data["accounts"]
         if not accounts:
-            self.accounts_box.addWidget(_muted("No accounts yet."))
+            self.accounts_box.addWidget(muted_label("Пока нет счетов."))
         for account in accounts:
             row = QWidget()
             line = QHBoxLayout(row)
             line.setContentsMargins(0, 0, 0, 0)
             name = QLabel(account["name"])
-            kind = TagLabel(account["kind"])
+            kind = TagLabel(terms.label(terms.ACCOUNT_KINDS, account["kind"]))
             amount = QLabel(
                 money.format_amount(account["balance"], account["currency"])
             )
@@ -186,17 +192,17 @@ class DashboardPage(BasePage):
             self.accounts_box.addWidget(row)
 
         # recent transactions
-        _clear(self.recent_box)
+        clear_layout(self.recent_box)
         recent = data["recent_transactions"]
         if not recent:
-            self.recent_box.addWidget(_muted("No transactions yet."))
+            self.recent_box.addWidget(muted_label("Пока нет операций."))
         for tx in recent:
             row = QWidget()
             line = QHBoxLayout(row)
             line.setContentsMargins(0, 0, 0, 0)
             left = QVBoxLayout()
             left.setSpacing(1)
-            caption = QLabel(tx["payee"] or tx["category_name"] or "Transaction")
+            caption = QLabel(tx["payee"] or tx["category_name"] or "Операция")
             meta = QLabel(f"{tx['occurred_on']}  \u00b7  {tx['account_name'] or ''}")
             meta.setObjectName("Muted")
             left.addWidget(caption)
@@ -220,26 +226,26 @@ class DashboardPage(BasePage):
         learning = data["learning"]
         self.learning_card.set_value(
             f"{learning['hours']} h",
-            hint=f"{learning['active']} active \u00b7 "
-                 f"{learning['finished']} finished",
+            hint=f"в процессе: {learning['active']} \u00b7 "
+                 f"завершено: {learning['finished']}",
         )
         registries = data["registries"]
         self.registry_card.set_value(
             str(registries["tables"]),
-            hint=f"{registries['records']} records stored",
+            hint=f"записей: {registries['records']}",
         )
         self.workbook_card.set_value(
-            str(data["workbook"]["entries"]), hint="workbook entries"
+            str(data["workbook"]["entries"]), hint="записей в заметках"
         )
 
         # budgets
-        _clear(self.budget_box)
+        clear_layout(self.budget_box)
         start, _ = self.app.wallet.month_bounds()
         period = start[:7]
         budgets = self.app.wallet.list_budgets(period)
         if not budgets:
             self.budget_box.addWidget(
-                _muted("No budgets set for this month. Add them on the Wallet page.")
+                muted_label("На этот месяц бюджеты не заданы. Добавьте их в разделе «Кошелёк».")
             )
         for budget in budgets:
             limit = budget["limit_minor"] or 0
@@ -261,23 +267,6 @@ class DashboardPage(BasePage):
             )
 
 
-def _wrap(layout):
-    widget = QWidget()
-    widget.setLayout(layout)
-    return widget
-
-
-def _title(text):
-    label = QLabel(text)
-    label.setObjectName("SectionTitle")
-    return label
-
-
-def _muted(text):
-    label = QLabel(text)
-    label.setObjectName("Muted")
-    return label
-
 
 def _legend(items):
     widget = QWidget()
@@ -291,8 +280,3 @@ def _legend(items):
     row.addStretch(1)
     return widget
 
-
-def _clear(layout):
-    from ..widgets.common import clear_layout
-
-    clear_layout(layout)

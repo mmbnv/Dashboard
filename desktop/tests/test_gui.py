@@ -117,7 +117,7 @@ def test_adding_a_transaction_through_the_service_updates_the_table(window, qt_a
     account = window.app.wallet.list_accounts(with_balances=False)[0]["id"]
     groceries = [
         c for c in window.app.wallet.list_categories(EXPENSE)
-        if c["name"] == "Groceries"
+        if c["name"] == "Продукты"
     ][0]["id"]
     window.app.wallet.add_transaction(
         account, EXPENSE, "123,45", date.today().isoformat(), groceries, "Test shop"
@@ -253,7 +253,7 @@ def test_menu_bar_has_expected_menus(window):
     """A desktop application needs a menu bar, not just sidebar buttons."""
     menus = [a.menu().title().replace("&", "") for a in window.menuBar().actions()
              if a.menu()]
-    for expected in ("File", "View", "Go", "Help"):
+    for expected in ("Файл", "Вид", "Переход", "Справка"):
         assert expected in menus, f"missing {expected} menu: {menus}"
 
 

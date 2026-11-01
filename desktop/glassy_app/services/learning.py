@@ -19,7 +19,7 @@ class LearningService:
     def get_course(self, course_id):
         row = self.courses.get(course_id)
         if not row:
-            raise NotFoundError("Course not found")
+            raise NotFoundError("Курс не найден")
         return row
 
     def create_course(self, **kwargs):
@@ -35,11 +35,11 @@ class LearningService:
         if self.courses.count() == 0:
             self.courses.create(
                 Course(
-                    title="Getting started",
+                    title="С чего начать",
                     provider="Glassy Ledger",
                     status="active",
                     total_units=5,
-                    note="An example course. Log a session, or delete it.",
+                    note="Пример курса. Запишите занятие или удалите его.",
                 )
             )
 
@@ -69,8 +69,7 @@ class LearningService:
         total = int(course["total_units"] or 0)
         if total and new_done > total:
             raise ValidationError(
-                f"Only {total - int(course['done_units'] or 0)} units remain "
-                "on this course",
+                f"На курсе осталось единиц: {total - int(course['done_units'] or 0)}",
                 field="units_done",
             )
 
@@ -99,7 +98,7 @@ class LearningService:
         """Delete a session and roll the logged units back off the course."""
         row = self.sessions.get(session_id)
         if not row:
-            raise NotFoundError("Session not found")
+            raise NotFoundError("Занятие не найдено")
         course = self.courses.get(row["course_id"])
         with self.db.transaction():
             self.sessions.delete(session_id)

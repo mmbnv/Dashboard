@@ -109,4 +109,4 @@ def test_workbook_pinned_entries_come_first(app):
     # precede the unpinned one.
     titles = [entry["title"] for entry in entries]
     assert titles.index("Important") < titles.index("Normal")
-    assert titles.index("Welcome to your workbook") < titles.index("Normal")
+    assert titles.index("Добро пожаловать в заметки") < titles.index("Normal")

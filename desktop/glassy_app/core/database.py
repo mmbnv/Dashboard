@@ -213,8 +213,8 @@ class Database:
             current = cur.execute("PRAGMA user_version").fetchone()[0]
             if current > SCHEMA_VERSION:
                 raise RuntimeError(
-                    f"Database schema v{current} is newer than this build "
-                    f"supports (v{SCHEMA_VERSION}). Update the application."
+                    f"Версия схемы базы v{current} новее, чем поддерживает "
+                    f"эта сборка (v{SCHEMA_VERSION}). Обновите приложение."
                 )
             for version in range(current + 1, SCHEMA_VERSION + 1):
                 for statement in MIGRATIONS[version]:

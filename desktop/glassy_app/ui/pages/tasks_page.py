@@ -18,23 +18,31 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import terms
 from ...core.errors import AppError
 from ...core.models import TASK_PRIORITIES, TASK_STATUSES
 from ..base_page import BasePage
 from ..dialogs import confirm, show_error
-from ..widgets.common import Card, SectionHeader, StatCard, TagLabel, clear_layout
+from ..widgets.common import (
+    Card,
+    SectionHeader,
+    StatCard,
+    TagLabel,
+    clear_layout,
+    wrap,
+)
 
-STATUS_LABELS = {"todo": "To do", "doing": "In progress", "done": "Done"}
+STATUS_LABELS = terms.TASK_STATUSES
 PRIORITY_COLOURS = {"high": "#ef4444", "medium": "#f59e0b", "low": "#38bdf8"}
 
 
 class TasksPage(BasePage):
-    title = "Tasks"
-    subtitle = "A board and a list for everything you need to do"
+    title = terms.SECTION_TITLES["tasks"]
+    subtitle = terms.SECTION_SUBTITLES["tasks"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
-        add = QPushButton("New task")
+        add = QPushButton("Новая задача")
         add.setObjectName("Primary")
         add.clicked.connect(self._new_task)
         self.header.add_action(add)
@@ -44,20 +52,20 @@ class TasksPage(BasePage):
         self.kpi_row.setSpacing(12)
         self.kpi = {}
         for key, label in (
-            ("total", "Total"),
-            ("todo", "To do"),
-            ("doing", "In progress"),
-            ("done", "Done"),
-            ("overdue", "Overdue"),
+            ("total", "Всего"),
+            ("todo", STATUS_LABELS["todo"]),
+            ("doing", STATUS_LABELS["doing"]),
+            ("done", STATUS_LABELS["done"]),
+            ("overdue", "Просрочено"),
         ):
             card = StatCard(label)
             self.kpi[key] = card
             self.kpi_row.addWidget(card)
-        self.add(_wrap(self.kpi_row))
+        self.add(wrap(self.kpi_row))
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_board_tab(), "Board")
-        self.tabs.addTab(self._build_list_tab(), "List")
+        self.tabs.addTab(self._build_board_tab(), "Доска")
+        self.tabs.addTab(self._build_list_tab(), "Список")
         self.tabs.currentChanged.connect(lambda _: self.refresh())
         self.add(self.tabs)
 
@@ -129,7 +137,7 @@ class TasksPage(BasePage):
             if task["due_on"] < QDate.currentDate().toString("yyyy-MM-dd") and (
                 task["status"] != "done"
             ):
-                due = TagLabel(f"overdue {task['due_on']}", "#ef4444")
+                due = TagLabel(f"просрочено {task['due_on']}", "#ef4444")
             tags.addWidget(due)
         if task["tags"]:
             tags.addWidget(TagLabel(task["tags"], "#a855f7"))
@@ -150,7 +158,7 @@ class TasksPage(BasePage):
             )
         )
         actions.addWidget(move, 1)
-        edit = QPushButton("Edit")
+        edit = QPushButton("Изменить")
         edit.setObjectName("Ghost")
         edit.clicked.connect(lambda _, tid=task["id"]: self._edit_task(tid))
         actions.addWidget(edit)
@@ -170,21 +178,21 @@ class TasksPage(BasePage):
 
         row = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search tasks\u2026")
+        self.search.setPlaceholderText("Поиск задач\u2026")
         self.search.textChanged.connect(self._load_list)
         row.addWidget(self.search, 2)
 
         self.status_filter = QComboBox()
-        self.status_filter.addItem("All statuses", None)
+        self.status_filter.addItem("Все статусы", None)
         for status in TASK_STATUSES:
             self.status_filter.addItem(STATUS_LABELS[status], status)
         self.status_filter.currentIndexChanged.connect(self._load_list)
         row.addWidget(self.status_filter)
 
         self.priority_filter = QComboBox()
-        self.priority_filter.addItem("All priorities", None)
+        self.priority_filter.addItem("Все приоритеты", None)
         for priority in TASK_PRIORITIES:
-            self.priority_filter.addItem(priority.capitalize(), priority)
+            self.priority_filter.addItem(terms.TASK_PRIORITIES[priority], priority)
         self.priority_filter.currentIndexChanged.connect(self._load_list)
         row.addWidget(self.priority_filter)
         layout.addLayout(row)
@@ -203,7 +211,7 @@ class TasksPage(BasePage):
             priority=self.priority_filter.currentData(),
         )
         if not tasks:
-            label = QLabel("No tasks match these filters.")
+            label = QLabel("По этим фильтрам задач нет.")
             label.setObjectName("Muted")
             self.list_box.addWidget(label)
             return
@@ -224,7 +232,7 @@ class TasksPage(BasePage):
             self.refresh()
 
     def _delete_task(self, task_id):
-        if confirm(self, "Delete this task?"):
+        if confirm(self, "Удалить эту задачу?"):
             self.app.tasks.delete_task(task_id)
             self.refresh()
 
@@ -247,38 +255,38 @@ class TaskDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.task_id = task_id
-        self.setWindowTitle("Edit task" if task_id else "New task")
+        self.setWindowTitle("Изменить задачу" if task_id else "Новая задача")
         self.setMinimumWidth(420)
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
         self.title_input = QLineEdit()
-        form.addRow("Title", self.title_input)
+        form.addRow("Название", self.title_input)
 
         self.status = QComboBox()
         for status in TASK_STATUSES:
             self.status.addItem(STATUS_LABELS[status], status)
-        form.addRow("Status", self.status)
+        form.addRow("Статус", self.status)
 
         self.priority = QComboBox()
         for priority in TASK_PRIORITIES:
-            self.priority.addItem(priority.capitalize(), priority)
+            self.priority.addItem(terms.TASK_PRIORITIES[priority], priority)
         self.priority.setCurrentIndex(1)
-        form.addRow("Priority", self.priority)
+        form.addRow("Приоритет", self.priority)
 
         self.due = QDateEdit()
         self.due.setCalendarPopup(True)
-        self.due.setDisplayFormat("yyyy-MM-dd")
+        self.due.setDisplayFormat("dd.MM.yyyy")
         self.due.setDate(QDate.currentDate().addDays(7))
-        form.addRow("Due date", self.due)
+        form.addRow("Срок", self.due)
 
         self.tags = QLineEdit()
-        form.addRow("Tags", self.tags)
+        form.addRow("Метки", self.tags)
 
         self.notes = QPlainTextEdit()
         self.notes.setFixedHeight(80)
-        form.addRow("Notes", self.notes)
+        form.addRow("Заметки", self.notes)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -321,8 +329,3 @@ class TaskDialog(QDialog):
             return
         self.accept()
 
-
-def _wrap(layout):
-    widget = QWidget()
-    widget.setLayout(layout)
-    return widget

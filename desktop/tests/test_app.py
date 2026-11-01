@@ -68,7 +68,7 @@ def test_transactions_csv_export(app, tmp_path):
     assert count == 1
     text = target.read_text(encoding="utf-8-sig")
     lines = text.strip().splitlines()
-    assert lines[0].startswith("date,kind,amount,account,category,payee,note")
+    assert lines[0].startswith("дата,вид,сумма,счёт,категория,получатель,заметка")
     assert "1500.50" in lines[1]
     assert "Boss" in lines[1]
 
@@ -141,7 +141,7 @@ def test_dashboard_overview_shape(app):
 def test_dashboard_reflects_new_data(app):
     account = app.wallet.list_accounts(with_balances=False)[0]["id"]
     groceries = [
-        c for c in app.wallet.list_categories(EXPENSE) if c["name"] == "Groceries"
+        c for c in app.wallet.list_categories(EXPENSE) if c["name"] == "Продукты"
     ][0]["id"]
     from datetime import date
 
@@ -150,7 +150,7 @@ def test_dashboard_reflects_new_data(app):
     data = app.dashboard.overview()
     assert data["month"]["expense"] == 25000
     assert data["net_worth"] == -25000
-    assert data["expense_by_category"][0]["category_name"] == "Groceries"
+    assert data["expense_by_category"][0]["category_name"] == "Продукты"
     assert data["expense_by_category"][0]["percent"] == 100.0
     assert data["recent_transactions"][0]["amount"] == 25000
 

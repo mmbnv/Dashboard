@@ -147,7 +147,7 @@ class Application:
         """Replace the live database with a backup file."""
         source = Path(source)
         if not source.exists():
-            raise ValidationError(f"Backup not found: {source}")
+            raise ValidationError(f"Резервная копия не найдена: {source}")
 
         # Close the connection first so the OS releases the file, then drop the
         # write-ahead log and shared-memory files. Without this the stale -wal
@@ -179,8 +179,8 @@ class Application:
         with open(path, "w", newline="", encoding="utf-8-sig") as handle:
             writer = csv.DictWriter(
                 handle,
-                fieldnames=["date", "kind", "amount", "account", "category",
-                            "payee", "note"],
+                fieldnames=["дата", "вид", "сумма", "счёт", "категория",
+                            "получатель", "заметка"],
             )
             writer.writeheader()
             writer.writerows(rows)

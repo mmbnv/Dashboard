@@ -30,6 +30,50 @@ def clear_layout(layout):
                 clear_layout(child)
 
 
+def wrap(layout):
+    """Return ``layout`` inside a plain widget, for adding to another layout."""
+    widget = QWidget()
+    widget.setLayout(layout)
+    return widget
+
+
+def row_of(*widgets, spacing=8):
+    """A horizontal layout holding ``widgets``, wrapped in a widget."""
+    row = QHBoxLayout()
+    row.setContentsMargins(0, 0, 0, 0)
+    row.setSpacing(spacing)
+    for widget in widgets:
+        if widget is None:
+            row.addStretch(1)
+        elif isinstance(widget, int):
+            row.addSpacing(widget)
+        else:
+            row.addWidget(widget)
+    return wrap(row)
+
+
+def title_label(text):
+    """A small heading inside a card."""
+    label = QLabel(text)
+    label.setObjectName("SectionTitle")
+    return label
+
+
+def muted_label(text):
+    """Dimmed explanatory text."""
+    label = QLabel(text)
+    label.setObjectName("Muted")
+    label.setWordWrap(True)
+    return label
+
+
+def field_label(text):
+    """A dimmed caption above a value."""
+    label = QLabel(text)
+    label.setObjectName("Muted")
+    return label
+
+
 class Card(QFrame):
     """A rounded surface panel."""
 
@@ -156,7 +200,7 @@ class BarChart(QWidget):
         rect = self.rect().adjusted(8, 8, -8, -24)
         if not self.labels or not self.series_a:
             painter.setPen(QColor(pal["text_dim"]))
-            painter.drawText(self.rect(), Qt.AlignCenter, "No data yet")
+            painter.drawText(self.rect(), Qt.AlignCenter, "Пока нет данных")
             painter.end()
             return
 
@@ -234,7 +278,7 @@ class DonutChart(QWidget):
         total = sum(max(0, value) for _, value, _ in self.slices)
         if not self.slices or total <= 0:
             painter.setPen(QColor(pal["text_dim"]))
-            painter.drawText(self.rect(), Qt.AlignCenter, "No data yet")
+            painter.drawText(self.rect(), Qt.AlignCenter, "Пока нет данных")
             painter.end()
             return
 

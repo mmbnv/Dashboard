@@ -25,21 +25,23 @@ from ..repositories.ledger import (
 )
 
 DEFAULT_EXPENSE_CATEGORIES = [
-    ("Groceries", "#22c55e"),
-    ("Transport", "#38bdf8"),
-    ("Housing", "#f97316"),
-    ("Health", "#ef4444"),
-    ("Entertainment", "#a855f7"),
-    ("Education", "#eab308"),
-    ("Other", "#64748b"),
+    ("Продукты", "#22c55e"),
+    ("Транспорт", "#38bdf8"),
+    ("Жильё", "#f97316"),
+    ("Здоровье", "#ef4444"),
+    ("Развлечения", "#a855f7"),
+    ("Образование", "#eab308"),
+    ("Прочее", "#64748b"),
 ]
 
 DEFAULT_INCOME_CATEGORIES = [
-    ("Salary", "#22c55e"),
-    ("Freelance", "#38bdf8"),
-    ("Gifts", "#a855f7"),
-    ("Other income", "#64748b"),
+    ("Зарплата", "#22c55e"),
+    ("Фриланс", "#38bdf8"),
+    ("Подарки", "#a855f7"),
+    ("Прочий доход", "#64748b"),
 ]
+
+KIND_NAMES = {INCOME: "Доход", EXPENSE: "Расход"}
 
 
 class WalletService:
@@ -54,7 +56,7 @@ class WalletService:
     def seed_defaults(self):
         """Create a starter account and category set on first run."""
         if self.accounts.count() == 0:
-            self.accounts.create(Account(name="Cash", kind="cash"))
+            self.accounts.create(Account(name="Наличные", kind="cash"))
         if self.categories.count() == 0:
             for name, color in DEFAULT_EXPENSE_CATEGORIES:
                 self.categories.create(
@@ -74,7 +76,7 @@ class WalletService:
     def get_account(self, account_id):
         row = self.accounts.get(account_id)
         if not row:
-            raise NotFoundError("Account not found")
+            raise NotFoundError("Счёт не найден")
         return row
 
     def create_account(self, **kwargs):
@@ -98,8 +100,8 @@ class WalletService:
         )
         if balance_row and balance_row["n"]:
             raise ConflictError(
-                f"This account has {balance_row['n']} transactions. "
-                "Archive it instead, or delete the transactions first."
+                f"У этого счёта операций: {balance_row['n']}. "
+                "Сначала удалите операции или отправьте счёт в архив."
             )
         self.accounts.delete(account_id)
 
@@ -112,7 +114,7 @@ class WalletService:
     def get_category(self, category_id):
         row = self.categories.get(category_id)
         if not row:
-            raise NotFoundError("Category not found")
+            raise NotFoundError("Категория не найдена")
         return row
 
     def create_category(self, **kwargs):
@@ -128,8 +130,8 @@ class WalletService:
         )
         if used and used["n"]:
             raise ConflictError(
-                f"This category is used by {used['n']} transactions. "
-                "Archive it instead."
+                f"Эта категория используется в операциях: {used['n']}. "
+                "Отправьте её в архив."
             )
         self.categories.delete(category_id)
 
@@ -140,7 +142,7 @@ class WalletService:
     def get_transaction(self, tx_id):
         row = self.transactions.get(tx_id)
         if not row:
-            raise NotFoundError("Transaction not found")
+            raise NotFoundError("Операция не найдена")
         return row
 
     def add_transaction(
@@ -237,15 +239,15 @@ class WalletService:
         for row in rows:
             out.append(
                 {
-                    "date": row["occurred_on"],
-                    "kind": row["kind"],
-                    "amount": money.format_amount(
+                    "дата": row["occurred_on"],
+                    "вид": KIND_NAMES.get(row["kind"], row["kind"]),
+                    "сумма": money.format_amount(
                         row["amount"], with_symbol=False
                     ).replace("\u00a0", ""),
-                    "account": row["account_name"] or "",
-                    "category": row["category_name"] or "",
-                    "payee": row["payee"],
-                    "note": row["note"],
+                    "счёт": row["account_name"] or "",
+                    "категория": row["category_name"] or "",
+                    "получатель": row["payee"],
+                    "заметка": row["note"],
                 }
             )
         return out

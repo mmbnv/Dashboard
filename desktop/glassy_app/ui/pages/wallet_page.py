@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import terms
 from ...core import money
 from ...core.errors import AppError
 from ...core.models import EXPENSE, INCOME
@@ -31,14 +32,15 @@ from ..widgets.common import (
     SectionHeader,
     StatCard,
     clear_layout,
+    wrap,
 )
 
-KIND_LABELS = {INCOME: "Income", EXPENSE: "Expense"}
+KIND_LABELS = terms.KINDS
 
 
 class WalletPage(BasePage):
-    title = "Wallet"
-    subtitle = "Income, expenses, accounts and budgets"
+    title = terms.SECTION_TITLES["wallet"]
+    subtitle = terms.SECTION_SUBTITLES["wallet"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
@@ -48,21 +50,21 @@ class WalletPage(BasePage):
         self.kpi_row.setSpacing(12)
         self.kpi = {}
         for key, label in (
-            ("balance", "Total balance"),
-            ("income", "Income (filter)"),
-            ("expense", "Expense (filter)"),
-            ("net", "Net (filter)"),
+            ("balance", "Общий баланс"),
+            ("income", "Доход (по фильтру)"),
+            ("expense", "Расход (по фильтру)"),
+            ("net", "Итог (по фильтру)"),
         ):
             card = StatCard(label)
             self.kpi[key] = card
             self.kpi_row.addWidget(card)
-        self.add(_wrap(self.kpi_row))
+        self.add(wrap(self.kpi_row))
 
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_transactions_tab(), "Transactions")
-        self.tabs.addTab(self._build_accounts_tab(), "Accounts")
-        self.tabs.addTab(self._build_categories_tab(), "Categories")
-        self.tabs.addTab(self._build_budgets_tab(), "Budgets")
+        self.tabs.addTab(self._build_transactions_tab(), "Операции")
+        self.tabs.addTab(self._build_accounts_tab(), "Счета")
+        self.tabs.addTab(self._build_categories_tab(), "Категории")
+        self.tabs.addTab(self._build_budgets_tab(), "Бюджеты")
         self.tabs.currentChanged.connect(lambda _: self.refresh())
         self.add(self.tabs)
 
@@ -78,14 +80,14 @@ class WalletPage(BasePage):
         controls = QHBoxLayout()
         controls.setSpacing(8)
         self.tx_search = QLineEdit()
-        self.tx_search.setPlaceholderText("Search payee, note or category\u2026")
+        self.tx_search.setPlaceholderText("Поиск по получателю, заметке или категории\u2026")
         self.tx_search.textChanged.connect(self._load_transactions)
         controls.addWidget(self.tx_search, 2)
 
         self.tx_kind = QComboBox()
-        self.tx_kind.addItem("All kinds", None)
-        self.tx_kind.addItem("Income", INCOME)
-        self.tx_kind.addItem("Expense", EXPENSE)
+        self.tx_kind.addItem("Все виды", None)
+        self.tx_kind.addItem(KIND_LABELS[INCOME], INCOME)
+        self.tx_kind.addItem(KIND_LABELS[EXPENSE], EXPENSE)
         self.tx_kind.currentIndexChanged.connect(self._load_transactions)
         controls.addWidget(self.tx_kind)
 
@@ -97,7 +99,7 @@ class WalletPage(BasePage):
         self.tx_category.currentIndexChanged.connect(self._load_transactions)
         controls.addWidget(self.tx_category)
 
-        add_button = QPushButton("Add transaction")
+        add_button = QPushButton("Добавить операцию")
         add_button.setObjectName("Primary")
         add_button.clicked.connect(self._add_transaction)
         controls.addWidget(add_button)
@@ -107,25 +109,25 @@ class WalletPage(BasePage):
         date_row.setSpacing(8)
         self.tx_from = QDateEdit()
         self.tx_from.setCalendarPopup(True)
-        self.tx_from.setDisplayFormat("yyyy-MM-dd")
+        self.tx_from.setDisplayFormat("dd.MM.yyyy")
         self.tx_from.setDate(QDate.currentDate().addMonths(-1))
         self.tx_from.dateChanged.connect(self._load_transactions)
         self.tx_to = QDateEdit()
         self.tx_to.setCalendarPopup(True)
-        self.tx_to.setDisplayFormat("yyyy-MM-dd")
+        self.tx_to.setDisplayFormat("dd.MM.yyyy")
         self.tx_to.setDate(QDate.currentDate())
         self.tx_to.dateChanged.connect(self._load_transactions)
 
-        clear_button = QPushButton("Clear filters")
+        clear_button = QPushButton("Сбросить фильтры")
         clear_button.setObjectName("Ghost")
         clear_button.clicked.connect(self._clear_filters)
-        export_button = QPushButton("Export CSV")
+        export_button = QPushButton("Экспорт в CSV")
         export_button.setObjectName("Ghost")
         export_button.clicked.connect(self._export_csv)
 
-        date_row.addWidget(QLabel("From"))
+        date_row.addWidget(QLabel("С"))
         date_row.addWidget(self.tx_from)
-        date_row.addWidget(QLabel("To"))
+        date_row.addWidget(QLabel("По"))
         date_row.addWidget(self.tx_to)
         date_row.addWidget(clear_button)
         date_row.addStretch(1)
@@ -134,7 +136,7 @@ class WalletPage(BasePage):
 
         self.tx_table = QTableWidget(0, 7)
         self.tx_table.setHorizontalHeaderLabels(
-            ["Date", "Kind", "Amount", "Account", "Category", "Payee", "Note"]
+            ["Дата", "Вид", "Сумма", "Счёт", "Категория", "Получатель", "Заметка"]
         )
         self.tx_table.setAlternatingRowColors(True)
         self.tx_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -149,9 +151,9 @@ class WalletPage(BasePage):
         layout.addWidget(self.tx_table, 1)
 
         actions = QHBoxLayout()
-        edit_button = QPushButton("Edit selected")
+        edit_button = QPushButton("Изменить")
         edit_button.clicked.connect(self._edit_transaction)
-        delete_button = QPushButton("Delete selected")
+        delete_button = QPushButton("Удалить")
         delete_button.setObjectName("Danger")
         delete_button.clicked.connect(self._delete_transaction)
         actions.addWidget(edit_button)
@@ -198,7 +200,7 @@ class WalletPage(BasePage):
             self.tx_table.item(index, 0).setData(Qt.UserRole, tx["id"])
         self.tx_table.setSortingEnabled(True)
 
-        self.tx_count.setText(f"{len(rows)} transactions")
+        self.tx_count.setText(f"операций: {len(rows)}")
 
         totals = self.app.wallet.summary(
             date_from=filters["date_from"], date_to=filters["date_to"],
@@ -239,7 +241,7 @@ class WalletPage(BasePage):
     def _edit_transaction(self):
         tx_id = self._selected_tx_id()
         if not tx_id:
-            show_info(self, "Select a transaction first.")
+            show_info(self, "Сначала выберите операцию.")
             return
         dialog = TransactionDialog(self.app, self, tx_id=tx_id)
         if dialog.exec() == QDialog.Accepted:
@@ -248,9 +250,9 @@ class WalletPage(BasePage):
     def _delete_transaction(self):
         tx_id = self._selected_tx_id()
         if not tx_id:
-            show_info(self, "Select a transaction first.")
+            show_info(self, "Сначала выберите операцию.")
             return
-        if confirm(self, "Delete this transaction? This cannot be undone."):
+        if confirm(self, "Удалить эту операцию? Действие необратимо."):
             self.app.wallet.delete_transaction(tx_id)
             self.refresh()
 
@@ -258,7 +260,7 @@ class WalletPage(BasePage):
         from PySide6.QtWidgets import QFileDialog
 
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export transactions", "transactions.csv", "CSV files (*.csv)"
+            self, "Экспорт операций", "transactions.csv", "Файлы CSV (*.csv)"
         )
         if not path:
             return
@@ -271,7 +273,7 @@ class WalletPage(BasePage):
             date_from=self.tx_from.date().toString("yyyy-MM-dd"),
             date_to=self.tx_to.date().toString("yyyy-MM-dd"),
         )
-        show_info(self, f"Exported {count} transactions to:\n{path}")
+        show_info(self, f"Экспортировано операций: {count}\n{path}")
 
     # ------------------------------------------------------------------
     # Accounts
@@ -283,12 +285,12 @@ class WalletPage(BasePage):
         layout.setSpacing(10)
 
         row = QHBoxLayout()
-        add = QPushButton("Add account")
+        add = QPushButton("Добавить счёт")
         add.setObjectName("Primary")
         add.clicked.connect(self._add_account)
-        edit = QPushButton("Edit selected")
+        edit = QPushButton("Изменить")
         edit.clicked.connect(self._edit_account)
-        delete = QPushButton("Delete selected")
+        delete = QPushButton("Удалить")
         delete.setObjectName("Danger")
         delete.clicked.connect(self._delete_account)
         row.addWidget(add)
@@ -299,7 +301,7 @@ class WalletPage(BasePage):
 
         self.accounts_table = QTableWidget(0, 5)
         self.accounts_table.setHorizontalHeaderLabels(
-            ["Name", "Kind", "Currency", "Balance", "Transactions"]
+            ["Название", "Вид", "Валюта", "Баланс", "Операций"]
         )
         self.accounts_table.setAlternatingRowColors(True)
         self.accounts_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -318,7 +320,7 @@ class WalletPage(BasePage):
         for index, account in enumerate(rows):
             values = [
                 account["name"],
-                account["kind"],
+                terms.label(terms.ACCOUNT_KINDS, account["kind"]),
                 account["currency"],
                 money.format_amount(account["balance"], account["currency"]),
                 str(account["tx_count"]),
@@ -349,7 +351,7 @@ class WalletPage(BasePage):
     def _edit_account(self):
         account_id = self._selected_account_id()
         if not account_id:
-            show_info(self, "Select an account first.")
+            show_info(self, "Сначала выберите счёт.")
             return
         dialog = AccountDialog(self.app, self, account_id=account_id)
         if dialog.exec() == QDialog.Accepted:
@@ -358,9 +360,9 @@ class WalletPage(BasePage):
     def _delete_account(self):
         account_id = self._selected_account_id()
         if not account_id:
-            show_info(self, "Select an account first.")
+            show_info(self, "Сначала выберите счёт.")
             return
-        if not confirm(self, "Delete this account?"):
+        if not confirm(self, "Удалить этот счёт?"):
             return
         try:
             self.app.wallet.delete_account(account_id)
@@ -379,12 +381,12 @@ class WalletPage(BasePage):
         layout.setSpacing(10)
 
         row = QHBoxLayout()
-        add = QPushButton("Add category")
+        add = QPushButton("Добавить категорию")
         add.setObjectName("Primary")
         add.clicked.connect(self._add_category)
-        edit = QPushButton("Edit selected")
+        edit = QPushButton("Изменить")
         edit.clicked.connect(self._edit_category)
-        delete = QPushButton("Delete selected")
+        delete = QPushButton("Удалить")
         delete.setObjectName("Danger")
         delete.clicked.connect(self._delete_category)
         row.addWidget(add)
@@ -395,7 +397,7 @@ class WalletPage(BasePage):
 
         self.categories_table = QTableWidget(0, 5)
         self.categories_table.setHorizontalHeaderLabels(
-            ["Name", "Kind", "Colour", "Transactions", "Total"]
+            ["Название", "Вид", "Цвет", "Операций", "Итого"]
         )
         self.categories_table.setAlternatingRowColors(True)
         self.categories_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -441,7 +443,7 @@ class WalletPage(BasePage):
     def _edit_category(self):
         category_id = self._selected_category_id()
         if not category_id:
-            show_info(self, "Select a category first.")
+            show_info(self, "Сначала выберите категорию.")
             return
         dialog = CategoryDialog(self.app, self, category_id=category_id)
         if dialog.exec() == QDialog.Accepted:
@@ -450,9 +452,9 @@ class WalletPage(BasePage):
     def _delete_category(self):
         category_id = self._selected_category_id()
         if not category_id:
-            show_info(self, "Select a category first.")
+            show_info(self, "Сначала выберите категорию.")
             return
-        if not confirm(self, "Delete this category?"):
+        if not confirm(self, "Удалить эту категорию?"):
             return
         try:
             self.app.wallet.delete_category(category_id)
@@ -471,14 +473,14 @@ class WalletPage(BasePage):
         layout.setSpacing(10)
 
         row = QHBoxLayout()
-        row.addWidget(QLabel("Month"))
+        row.addWidget(QLabel("Месяц"))
         self.budget_period = QComboBox()
         self.budget_period.currentIndexChanged.connect(self._load_budgets)
         row.addWidget(self.budget_period)
-        add = QPushButton("Set budget")
+        add = QPushButton("Задать бюджет")
         add.setObjectName("Primary")
         add.clicked.connect(self._set_budget)
-        remove = QPushButton("Remove selected")
+        remove = QPushButton("Убрать")
         remove.setObjectName("Danger")
         remove.clicked.connect(self._remove_budget)
         row.addWidget(add)
@@ -523,7 +525,7 @@ class WalletPage(BasePage):
         rows = self.app.wallet.list_budgets(period)
         currency = self.app.currency
         if not rows:
-            label = QLabel("No budgets for this month yet.")
+            label = QLabel("На этот месяц бюджетов пока нет.")
             label.setObjectName("Muted")
             self.budgets_box.addWidget(label)
             return
@@ -541,7 +543,7 @@ class WalletPage(BasePage):
                 budget["category_name"],
                 f"{money.format_amount(spent, currency, with_symbol=False)}"
                 f" / {money.format_amount(limit, currency, with_symbol=False)}"
-                f"   ({money.format_amount(remaining, currency, with_symbol=False)} left)",
+                f"   (осталось {money.format_amount(remaining, currency, with_symbol=False)})",
                 percent,
                 colour,
             )
@@ -561,9 +563,9 @@ class WalletPage(BasePage):
                 selected = widget.property("budget_id")
                 break
         if not selected:
-            show_info(self, "Nothing to remove for this month.")
+            show_info(self, "За этот месяц убирать нечего.")
             return
-        if confirm(self, "Remove this budget?"):
+        if confirm(self, "Убрать этот бюджет?"):
             self.app.wallet.delete_budget(selected)
             self.refresh()
 
@@ -591,7 +593,7 @@ class WalletPage(BasePage):
             (
                 self.tx_account,
                 [(a["name"], a["id"]) for a in self.app.wallet.list_accounts()],
-                "All accounts",
+                "Все счета",
             ),
             (
                 self.tx_category,
@@ -599,7 +601,7 @@ class WalletPage(BasePage):
                     (c["name"], c["id"])
                     for c in self.app.wallet.list_categories()
                 ],
-                "All categories",
+                "Все категории",
             ),
         ):
             previous = combo.currentData()
@@ -621,7 +623,7 @@ class TransactionDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.tx_id = tx_id
-        self.setWindowTitle("Edit transaction" if tx_id else "New transaction")
+        self.setWindowTitle("Изменить операцию" if tx_id else "Новая операция")
         self.setMinimumWidth(430)
 
         layout = QVBoxLayout(self)
@@ -629,34 +631,34 @@ class TransactionDialog(QDialog):
         form.setSpacing(10)
 
         self.kind = QComboBox()
-        self.kind.addItem("Expense", EXPENSE)
-        self.kind.addItem("Income", INCOME)
+        self.kind.addItem(KIND_LABELS[EXPENSE], EXPENSE)
+        self.kind.addItem(KIND_LABELS[INCOME], INCOME)
         self.kind.currentIndexChanged.connect(self._reload_categories)
-        form.addRow("Kind", self.kind)
+        form.addRow("Вид", self.kind)
 
         self.amount = QLineEdit()
-        self.amount.setPlaceholderText("e.g. 1250,50")
-        form.addRow("Amount", self.amount)
+        self.amount.setPlaceholderText("например, 1250,50")
+        form.addRow("Сумма", self.amount)
 
         self.account = QComboBox()
         for account in app.wallet.list_accounts(with_balances=False):
             self.account.addItem(account["name"], account["id"])
-        form.addRow("Account", self.account)
+        form.addRow("Счёт", self.account)
 
         self.category = QComboBox()
-        form.addRow("Category", self.category)
+        form.addRow("Категория", self.category)
 
         self.occurred = QDateEdit()
         self.occurred.setCalendarPopup(True)
-        self.occurred.setDisplayFormat("yyyy-MM-dd")
+        self.occurred.setDisplayFormat("dd.MM.yyyy")
         self.occurred.setDate(QDate.currentDate())
-        form.addRow("Date", self.occurred)
+        form.addRow("Дата", self.occurred)
 
         self.payee = QLineEdit()
-        form.addRow("Payee", self.payee)
+        form.addRow("Получатель", self.payee)
 
         self.note = QLineEdit()
-        form.addRow("Note", self.note)
+        form.addRow("Заметка", self.note)
 
         layout.addLayout(form)
 
@@ -675,7 +677,7 @@ class TransactionDialog(QDialog):
         kind = self.kind.currentData()
         previous = self.category.currentData()
         self.category.clear()
-        self.category.addItem("\u2014 none \u2014", None)
+        self.category.addItem("\u2014 без категории \u2014", None)
         for cat in self.app.wallet.list_categories(kind):
             self.category.addItem(cat["name"], cat["id"])
         index = self.category.findData(previous)
@@ -732,30 +734,30 @@ class AccountDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.account_id = account_id
-        self.setWindowTitle("Edit account" if account_id else "New account")
+        self.setWindowTitle("Изменить счёт" if account_id else "Новый счёт")
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
         self.name = QLineEdit()
-        form.addRow("Name", self.name)
+        form.addRow("Название", self.name)
 
         self.kind = QComboBox()
         for value in ("cash", "bank", "card", "savings", "investment", "other"):
-            self.kind.addItem(value.capitalize(), value)
-        form.addRow("Kind", self.kind)
+            self.kind.addItem(terms.label(terms.ACCOUNT_KINDS, value, value), value)
+        form.addRow("Вид", self.kind)
 
         self.currency = QComboBox()
         for value in ("RUB", "USD", "EUR", "KZT", "UAH"):
             self.currency.addItem(value, value)
-        form.addRow("Currency", self.currency)
+        form.addRow("Валюта", self.currency)
 
         self.opening = QLineEdit("0")
-        form.addRow("Opening balance", self.opening)
+        form.addRow("Начальный остаток", self.opening)
 
         self.note = QLineEdit()
-        form.addRow("Note", self.note)
+        form.addRow("Заметка", self.note)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -802,22 +804,22 @@ class CategoryDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.category_id = category_id
-        self.setWindowTitle("Edit category" if category_id else "New category")
+        self.setWindowTitle("Изменить категорию" if category_id else "Новая категория")
         self.setMinimumWidth(360)
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
         self.name = QLineEdit()
-        form.addRow("Name", self.name)
+        form.addRow("Название", self.name)
 
         self.kind = QComboBox()
-        self.kind.addItem("Expense", EXPENSE)
-        self.kind.addItem("Income", INCOME)
-        form.addRow("Kind", self.kind)
+        self.kind.addItem(KIND_LABELS[EXPENSE], EXPENSE)
+        self.kind.addItem(KIND_LABELS[INCOME], INCOME)
+        form.addRow("Вид", self.kind)
 
         self.color = QLineEdit("#7c3aed")
-        form.addRow("Colour", self.color)
+        form.addRow("Цвет", self.color)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -857,7 +859,7 @@ class BudgetDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.period = period or date.today().strftime("%Y-%m")
-        self.setWindowTitle(f"Set budget for {self.period}")
+        self.setWindowTitle(f"Бюджет на {self.period}")
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
@@ -866,11 +868,11 @@ class BudgetDialog(QDialog):
         self.category = QComboBox()
         for cat in app.wallet.list_categories(EXPENSE):
             self.category.addItem(cat["name"], cat["id"])
-        form.addRow("Category", self.category)
+        form.addRow("Категория", self.category)
 
         self.limit = QLineEdit()
-        self.limit.setPlaceholderText("e.g. 20000")
-        form.addRow("Monthly limit", self.limit)
+        self.limit.setPlaceholderText("например, 20000")
+        form.addRow("Лимит на месяц", self.limit)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -890,8 +892,3 @@ class BudgetDialog(QDialog):
             return
         self.accept()
 
-
-def _wrap(layout):
-    widget = QWidget()
-    widget.setLayout(layout)
-    return widget

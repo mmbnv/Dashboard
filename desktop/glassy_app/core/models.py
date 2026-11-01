@@ -49,12 +49,12 @@ def validate_iso_date(value, field_name="date", allow_empty=True):
     if not text:
         if allow_empty:
             return ""
-        raise ValidationError(f"{field_name} is required", field=field_name)
+        raise ValidationError(f"Поле «{field_name}» обязательно", field=field_name)
     try:
         parsed = datetime.strptime(text, "%Y-%m-%d").date()
     except ValueError:
         raise ValidationError(
-            f"{field_name} must be a date in YYYY-MM-DD form, got {text!r}",
+            f"{field_name}: нужна дата в виде ГГГГ-ММ-ДД, получено {text!r}",
             field=field_name,
         )
     return parsed.isoformat()
@@ -67,7 +67,7 @@ def validate_period(value):
         datetime.strptime(text, "%Y-%m")
     except ValueError:
         raise ValidationError(
-            f"Period must look like YYYY-MM, got {text!r}", field="period"
+            f"Период должен быть в виде ГГГГ-ММ, получено {text!r}", field="period"
         )
     return text
 
@@ -87,7 +87,7 @@ class Account:
     def validate(self):
         self.name = _clean_str(self.name)
         if not self.name:
-            raise ValidationError("Account name is required", field="name")
+            raise ValidationError("Укажите название счёта", field="name")
         self.kind = _clean_str(self.kind, "cash") or "cash"
         self.currency = (_clean_str(self.currency, "RUB") or "RUB").upper()
         self.note = _clean_str(self.note)
@@ -114,10 +114,10 @@ class Category:
     def validate(self):
         self.name = _clean_str(self.name)
         if not self.name:
-            raise ValidationError("Category name is required", field="name")
+            raise ValidationError("Укажите название категории", field="name")
         if self.kind not in KINDS:
             raise ValidationError(
-                f"Category kind must be one of {KINDS}", field="kind"
+                f"Тип категории должен быть одним из: {KINDS}", field="kind"
             )
         return self
 
@@ -141,12 +141,12 @@ class Transaction:
                 f"Transaction kind must be one of {KINDS}", field="kind"
             )
         if not self.account_id:
-            raise ValidationError("An account must be selected", field="account_id")
+            raise ValidationError("Выберите счёт", field="account_id")
         self.amount = int(self.amount or 0)
         if self.amount <= 0:
-            raise ValidationError("Amount must be greater than zero", field="amount")
+            raise ValidationError("Сумма должна быть больше нуля", field="amount")
         self.occurred_on = validate_iso_date(
-            self.occurred_on, "Date", allow_empty=False
+            self.occurred_on, "Дата", allow_empty=False
         )
         self.payee = _clean_str(self.payee)
         self.note = _clean_str(self.note)
@@ -164,11 +164,11 @@ class Budget:
 
     def validate(self):
         if not self.category_id:
-            raise ValidationError("A category must be selected", field="category_id")
+            raise ValidationError("Выберите категорию", field="category_id")
         self.period = validate_period(self.period)
         self.limit_minor = int(self.limit_minor or 0)
         if self.limit_minor < 0:
-            raise ValidationError("Budget limit cannot be negative", field="limit_minor")
+            raise ValidationError("Лимит бюджета не может быть отрицательным", field="limit_minor")
         return self
 
 
@@ -193,23 +193,23 @@ class Course:
     def validate(self):
         self.title = _clean_str(self.title)
         if not self.title:
-            raise ValidationError("Course title is required", field="title")
+            raise ValidationError("Укажите название курса", field="title")
         if self.status not in COURSE_STATUSES:
             raise ValidationError(
-                f"Status must be one of {COURSE_STATUSES}", field="status"
+                f"Статус должен быть одним из: {COURSE_STATUSES}", field="status"
             )
         self.total_units = max(0, int(self.total_units or 0))
         self.done_units = max(0, int(self.done_units or 0))
         if self.total_units and self.done_units > self.total_units:
             raise ValidationError(
-                "Completed units cannot exceed total units", field="done_units"
+                "Пройдено не может быть больше, чем всего", field="done_units"
             )
         self.cost = max(0, int(self.cost or 0))
         self.rating = int(self.rating or 0)
         if not 0 <= self.rating <= 5:
-            raise ValidationError("Rating must be between 0 and 5", field="rating")
-        self.started_on = validate_iso_date(self.started_on, "Start date")
-        self.finished_on = validate_iso_date(self.finished_on, "Finish date")
+            raise ValidationError("Оценка должна быть от 0 до 5", field="rating")
+        self.started_on = validate_iso_date(self.started_on, "Дата начала")
+        self.finished_on = validate_iso_date(self.finished_on, "Дата окончания")
         self.provider = _clean_str(self.provider)
         self.url = _clean_str(self.url)
         self.note = _clean_str(self.note)
@@ -236,15 +236,15 @@ class StudySession:
 
     def validate(self):
         if not self.course_id:
-            raise ValidationError("A course must be selected", field="course_id")
+            raise ValidationError("Выберите курс", field="course_id")
         self.minutes = max(0, int(self.minutes or 0))
         self.units_done = max(0, int(self.units_done or 0))
         if self.minutes == 0 and self.units_done == 0:
             raise ValidationError(
-                "Log either minutes or completed units", field="minutes"
+                "Укажите минуты или пройденные единицы", field="minutes"
             )
         self.occurred_on = validate_iso_date(
-            self.occurred_on, "Date", allow_empty=False
+            self.occurred_on, "Дата", allow_empty=False
         )
         self.note = _clean_str(self.note)
         return self
@@ -264,15 +264,15 @@ class RegistryField:
         self.key = _clean_str(self.key)
         self.label = _clean_str(self.label) or self.key
         if not self.key:
-            raise ValidationError("Field key is required", field="key")
+            raise ValidationError("Укажите имя поля", field="key")
         if not self.key.replace("_", "").isalnum():
             raise ValidationError(
-                "Field key may only contain letters, digits and underscores",
+                "Имя поля может содержать только буквы, цифры и подчёркивания",
                 field="key",
             )
         if self.type not in FIELD_TYPES:
             raise ValidationError(
-                f"Field type must be one of {FIELD_TYPES}", field="type"
+                f"Тип поля должен быть одним из: {FIELD_TYPES}", field="type"
             )
         return self
 
@@ -291,11 +291,11 @@ class Registry:
     def validate(self):
         self.name = _clean_str(self.name)
         if not self.name:
-            raise ValidationError("Registry name is required", field="name")
+            raise ValidationError("Укажите название таблицы", field="name")
         if not self.name.replace("_", "").replace("-", "").isalnum():
             raise ValidationError(
-                "Registry name may only contain letters, digits, dashes "
-                "and underscores",
+                "Название таблицы может содержать только буквы, цифры, дефисы "
+                "и подчёркивания",
                 field="name",
             )
         self.title = _clean_str(self.title) or self.name
@@ -317,7 +317,7 @@ class WorkbookEntry:
     def validate(self):
         self.title = _clean_str(self.title)
         if not self.title:
-            raise ValidationError("A title is required", field="title")
+            raise ValidationError("Укажите заголовок", field="title")
         self.body = self.body or ""
         self.kind = _clean_str(self.kind, "note") or "note"
         self.tags = _clean_str(self.tags)
@@ -340,16 +340,16 @@ class Task:
     def validate(self):
         self.title = _clean_str(self.title)
         if not self.title:
-            raise ValidationError("Task title is required", field="title")
+            raise ValidationError("Укажите название задачи", field="title")
         if self.status not in TASK_STATUSES:
             raise ValidationError(
-                f"Status must be one of {TASK_STATUSES}", field="status"
+                f"Статус должен быть одним из: {TASK_STATUSES}", field="status"
             )
         if self.priority not in TASK_PRIORITIES:
             raise ValidationError(
-                f"Priority must be one of {TASK_PRIORITIES}", field="priority"
+                f"Приоритет должен быть одним из: {TASK_PRIORITIES}", field="priority"
             )
-        self.due_on = validate_iso_date(self.due_on, "Due date")
+        self.due_on = validate_iso_date(self.due_on, "Срок")
         self.notes = _clean_str(self.notes)
         self.tags = _clean_str(self.tags)
         return self

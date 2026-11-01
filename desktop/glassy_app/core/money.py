@@ -31,10 +31,10 @@ def to_minor(value):
     symbol, because that is what people actually paste into a form.
     """
     if value is None or value == "":
-        raise ValidationError("Amount is required", field="amount")
+        raise ValidationError("Укажите сумму", field="amount")
 
     if isinstance(value, bool):
-        raise ValidationError("Amount must be a number", field="amount")
+        raise ValidationError("Сумма должна быть числом", field="amount")
 
     if isinstance(value, int):
         return value * SCALE
@@ -48,7 +48,7 @@ def to_minor(value):
     else:
         text = str(value).strip()
         if not text:
-            raise ValidationError("Amount is required", field="amount")
+            raise ValidationError("Укажите сумму", field="amount")
         # Keep digits, separators and a leading sign; drop currency symbols
         # and thousands separators.
         cleaned = []
@@ -64,10 +64,10 @@ def to_minor(value):
         try:
             dec = Decimal(text)
         except InvalidOperation:
-            raise ValidationError(f"{value!r} is not a valid amount", field="amount")
+            raise ValidationError(f"{value!r} — неверная сумма", field="amount")
 
     if not dec.is_finite():
-        raise ValidationError("Amount must be a finite number", field="amount")
+        raise ValidationError("Сумма должна быть конечным числом", field="amount")
 
     quantised = (dec * SCALE).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     return int(quantised)

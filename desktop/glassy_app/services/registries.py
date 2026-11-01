@@ -16,49 +16,49 @@ from ..repositories.library import RegistryRepository
 
 BUILTIN_TEMPLATES = {
     "inventory": {
-        "title": "Inventory",
-        "description": "Items you own with quantity and value.",
+        "title": "Инвентарь",
+        "description": "Вещи с количеством и стоимостью.",
         "icon": "box",
         "fields": [
-            {"key": "name", "label": "Item", "type": "text", "required": True},
-            {"key": "qty", "label": "Qty", "type": "number"},
-            {"key": "price", "label": "Unit price", "type": "money"},
-            {"key": "place", "label": "Location", "type": "text"},
-            {"key": "bought", "label": "Bought on", "type": "date"},
+            {"key": "name", "label": "Название", "type": "text", "required": True},
+            {"key": "qty", "label": "Кол-во", "type": "number"},
+            {"key": "price", "label": "Цена за единицу", "type": "money"},
+            {"key": "place", "label": "Место", "type": "text"},
+            {"key": "bought", "label": "Куплено", "type": "date"},
         ],
     },
     "contacts": {
-        "title": "Contacts",
-        "description": "People and how to reach them.",
+        "title": "Контакты",
+        "description": "Люди и способы связи с ними.",
         "icon": "user",
         "fields": [
-            {"key": "name", "label": "Name", "type": "text", "required": True},
-            {"key": "phone", "label": "Phone", "type": "text"},
-            {"key": "email", "label": "Email", "type": "text"},
-            {"key": "note", "label": "Note", "type": "multiline"},
+            {"key": "name", "label": "Имя", "type": "text", "required": True},
+            {"key": "phone", "label": "Телефон", "type": "text"},
+            {"key": "email", "label": "Почта", "type": "text"},
+            {"key": "note", "label": "Заметка", "type": "multiline"},
         ],
     },
     "readings": {
-        "title": "Meter readings",
-        "description": "Utility meters logged over time.",
+        "title": "Показания счётчиков",
+        "description": "Коммунальные счётчики по датам.",
         "icon": "gauge",
         "fields": [
-            {"key": "meter", "label": "Meter", "type": "text", "required": True},
-            {"key": "value", "label": "Reading", "type": "number"},
-            {"key": "taken_on", "label": "Taken on", "type": "date"},
+            {"key": "meter", "label": "Счётчик", "type": "text", "required": True},
+            {"key": "value", "label": "Показание", "type": "number"},
+            {"key": "taken_on", "label": "Дата снятия", "type": "date"},
         ],
     },
     "vehicles": {
-        "title": "Vehicle log",
-        "description": "Fuel, service and mileage records.",
+        "title": "Журнал автомобиля",
+        "description": "Топливо, обслуживание и пробег.",
         "icon": "car",
         "fields": [
-            {"key": "vehicle", "label": "Vehicle", "type": "text", "required": True},
-            {"key": "odometer", "label": "Odometer", "type": "number"},
-            {"key": "litres", "label": "Litres", "type": "number"},
-            {"key": "cost", "label": "Cost", "type": "money"},
-            {"key": "serviced_on", "label": "Date", "type": "date"},
-            {"key": "done", "label": "Paid", "type": "bool"},
+            {"key": "vehicle", "label": "Автомобиль", "type": "text", "required": True},
+            {"key": "odometer", "label": "Пробег", "type": "number"},
+            {"key": "litres", "label": "Литров", "type": "number"},
+            {"key": "cost", "label": "Стоимость", "type": "money"},
+            {"key": "serviced_on", "label": "Дата", "type": "date"},
+            {"key": "done", "label": "Оплачено", "type": "bool"},
         ],
     },
 }
@@ -76,7 +76,7 @@ class RegistryService:
     def get_registry(self, registry_id):
         row = self.repo.get(registry_id)
         if not row:
-            raise NotFoundError("Registry not found")
+            raise NotFoundError("Таблица не найдена")
         row["fields"] = self.repo.fields(registry_id)
         return row
 
@@ -92,7 +92,7 @@ class RegistryService:
         if template:
             spec = BUILTIN_TEMPLATES.get(template)
             if spec is None:
-                raise ValidationError(f"Unknown template {template!r}")
+                raise ValidationError(f"Неизвестный шаблон: {template!r}")
             title = title or spec["title"]
             description = description or spec["description"]
             icon = spec.get("icon", icon)
@@ -100,7 +100,7 @@ class RegistryService:
                 RegistryField(**f) for f in spec["fields"]
             ] if fields is None else fields
         if self.repo.by_name(name):
-            raise ConflictError(f"A registry named {name!r} already exists")
+            raise ConflictError(f"Таблица с именем {name!r} уже есть")
         registry = Registry(
             name=name,
             title=title or name,
@@ -140,7 +140,7 @@ class RegistryService:
             return self.repo.add_field(registry_id, field)
         except Exception as exc:
             if "UNIQUE" in str(exc):
-                raise ConflictError(f"A field named {key!r} already exists")
+                raise ConflictError(f"Поле с именем {key!r} уже есть")
             raise
 
     def update_field(self, field_id, **kwargs):
@@ -148,7 +148,7 @@ class RegistryService:
             "SELECT * FROM registry_fields WHERE id=?", (field_id,)
         )
         if not current:
-            raise NotFoundError("Field not found")
+            raise NotFoundError("Поле не найдено")
         try:
             options = json.loads(current["options"] or "[]")
         except (ValueError, TypeError):
@@ -186,7 +186,7 @@ class RegistryService:
             if not text:
                 if field["required"]:
                     raise ValidationError(
-                        f"{field['label']} is required", field=key
+                        f"Поле «{field['label']}» обязательно", field=key
                     )
                 cleaned[key] = ""
                 continue
@@ -195,14 +195,14 @@ class RegistryService:
                     cleaned[key] = str(money.to_minor(text))
                 except ValidationError:
                     raise ValidationError(
-                        f"{field['label']} must be an amount", field=key
+                        f"Поле «{field['label']}» должно быть суммой", field=key
                     )
             elif ftype == "number":
                 try:
                     cleaned[key] = str(float(text.replace(",", ".")))
                 except ValueError:
                     raise ValidationError(
-                        f"{field['label']} must be a number", field=key
+                        f"Поле «{field['label']}» должно быть числом", field=key
                     )
             elif ftype == "date":
                 cleaned[key] = validate_iso_date(text, field["label"])
@@ -210,7 +210,7 @@ class RegistryService:
                 options = field.get("options") or []
                 if options and text not in options:
                     raise ValidationError(
-                        f"{field['label']} must be one of {', '.join(options)}",
+                        f"Поле «{field['label']}» должно быть одним из: {', '.join(options)}",
                         field=key,
                     )
                 cleaned[key] = text
@@ -340,7 +340,7 @@ class RegistryService:
         spec = payload.get("registry") or {}
         name = spec.get("name")
         if not name:
-            raise ValidationError("Imported data has no registry name")
+            raise ValidationError("В импортируемых данных нет имени таблицы")
         existing = self.get_by_name(name)
         if existing:
             registry_id = existing["id"]
@@ -381,7 +381,7 @@ class RegistryService:
             if not text:
                 if field["required"]:
                     raise ValidationError(
-                        f"{field['label']} is required", field=key
+                        f"Поле «{field['label']}» обязательно", field=key
                     )
                 cleaned[key] = ""
                 continue
@@ -390,7 +390,7 @@ class RegistryService:
                     cleaned[key] = str(int(value))
                 except (TypeError, ValueError):
                     raise ValidationError(
-                        f"{field['label']} must be an amount", field=key
+                        f"Поле «{field['label']}» должно быть суммой", field=key
                     )
             elif field["type"] == "date":
                 cleaned[key] = validate_iso_date(text, field["label"])

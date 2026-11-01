@@ -35,7 +35,7 @@ def test_seeding_runs_only_once(data_dir):
 
 def test_balance_maths(app):
     account = _account(app)
-    groceries = _category(app, "Groceries")
+    groceries = _category(app, "Продукты")
     app.wallet.add_transaction(account, EXPENSE, "100,25", "2026-05-01", groceries)
     app.wallet.add_transaction(account, EXPENSE, "0.75", "2026-05-02", groceries)
     app.wallet.add_transaction(account, INCOME, "500", "2026-05-03")
@@ -76,7 +76,7 @@ def test_delete_account_with_transactions_is_blocked(app):
 
 def test_delete_category_in_use_is_blocked(app):
     account = _account(app)
-    groceries = _category(app, "Groceries")
+    groceries = _category(app, "Продукты")
     app.wallet.add_transaction(account, EXPENSE, "10", "2026-05-01", groceries)
     with pytest.raises(ConflictError):
         app.wallet.delete_category(groceries)
@@ -95,8 +95,8 @@ def test_update_transaction_changes_balance(app):
 
 def test_filters_are_applied(app):
     account = _account(app)
-    groceries = _category(app, "Groceries")
-    transport = _category(app, "Transport")
+    groceries = _category(app, "Продукты")
+    transport = _category(app, "Транспорт")
     app.wallet.add_transaction(account, EXPENSE, "10", "2026-05-01", groceries, "Lenta")
     app.wallet.add_transaction(account, EXPENSE, "20", "2026-05-02", transport, "Metro")
     app.wallet.add_transaction(account, INCOME, "30", "2026-05-03", payee="Boss")
@@ -113,8 +113,8 @@ def test_filters_are_applied(app):
 
 def test_category_breakdown_percentages(app):
     account = _account(app)
-    groceries = _category(app, "Groceries")
-    transport = _category(app, "Transport")
+    groceries = _category(app, "Продукты")
+    transport = _category(app, "Транспорт")
     app.wallet.add_transaction(account, EXPENSE, "75", "2026-05-01", groceries)
     app.wallet.add_transaction(account, EXPENSE, "25", "2026-05-02", transport)
     rows, total = app.wallet.category_breakdown(
@@ -128,7 +128,7 @@ def test_category_breakdown_percentages(app):
 
 def test_budgets_track_spending(app):
     account = _account(app)
-    groceries = _category(app, "Groceries")
+    groceries = _category(app, "Продукты")
     app.wallet.add_transaction(account, EXPENSE, "120", "2026-05-04", groceries)
     app.wallet.set_budget(groceries, "2026-05", "500")
     rows = app.wallet.list_budgets("2026-05")
@@ -144,7 +144,7 @@ def test_budgets_track_spending(app):
 
 def test_budget_ignores_other_months(app):
     account = _account(app)
-    groceries = _category(app, "Groceries")
+    groceries = _category(app, "Продукты")
     app.wallet.add_transaction(account, EXPENSE, "120", "2026-06-04", groceries)
     app.wallet.set_budget(groceries, "2026-05", "500")
     assert app.wallet.list_budgets("2026-05")[0]["spent_minor"] == 0
@@ -178,6 +178,6 @@ def test_export_rows_have_expected_shape(app):
     app.wallet.add_transaction(account, EXPENSE, "12.34", "2026-05-01", payee="X")
     rows = app.wallet.export_rows()
     assert set(rows[0]) == {
-        "date", "kind", "amount", "account", "category", "payee", "note"
+        "дата", "вид", "сумма", "счёт", "категория", "получатель", "заметка"
     }
-    assert rows[0]["amount"] == "12.34"
+    assert rows[0]["сумма"] == "12.34"

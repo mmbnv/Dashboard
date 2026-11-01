@@ -79,6 +79,12 @@ not a web page in a shell.
 
 - Layout: `glassy_app/{core,repositories,services,ui}`, one service per module.
   UI never touches SQL; pages call `self.app.<service>`.
+- **Language: the UI is exclusively Russian.** Every user-visible string —
+  nav labels, page titles, buttons, dialogs, statuses, seed data, CSV headers
+  — lives in `glassy_app/terms.py` (plus service error messages). Add or
+  rename a term there, never inline in a page, so the wording stays
+  consistent and interchangeable across screens. Tests assert Russian
+  strings (e.g. category "Продукты", menu "Файл"); keep them in sync.
 - Run from source: `cd desktop && python -m glassy_app`. On headless Linux use
   `xvfb-run -a` or `DISPLAY=:99`.
 - Build the exe: `pyinstaller packaging/glassy_ledger.spec --noconfirm`

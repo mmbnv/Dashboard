@@ -11,16 +11,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ... import APP_NAME, __version__
+from ... import APP_NAME, __version__, terms
 from ...core.errors import AppError
 from ..base_page import BasePage
 from ..dialogs import confirm, show_error, show_info
-from ..widgets.common import Card, SectionHeader, clear_layout
+from ..widgets.common import Card, SectionHeader, clear_layout, title_label
 
 
 class SettingsPage(BasePage):
-    title = "Settings"
-    subtitle = "Appearance, data and backups"
+    title = terms.SECTION_TITLES["settings"]
+    subtitle = terms.SECTION_SUBTITLES["settings"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
@@ -28,16 +28,16 @@ class SettingsPage(BasePage):
 
         # -- appearance --------------------------------------------------
         appearance = Card()
-        appearance.body().addWidget(_title("Appearance"))
+        appearance.body().addWidget(title_label("Внешний вид"))
         row = QHBoxLayout()
-        row.addWidget(QLabel("Theme"))
+        row.addWidget(QLabel("Тема"))
         self.theme_combo = QComboBox()
-        self.theme_combo.addItem("Dark", "dark")
-        self.theme_combo.addItem("Light", "light")
+        self.theme_combo.addItem("Тёмная", "dark")
+        self.theme_combo.addItem("Светлая", "light")
         self.theme_combo.currentIndexChanged.connect(self._change_theme)
         row.addWidget(self.theme_combo)
 
-        row.addWidget(QLabel("Currency"))
+        row.addWidget(QLabel("Валюта"))
         self.currency_combo = QComboBox()
         for code in ("RUB", "USD", "EUR", "KZT", "UAH"):
             self.currency_combo.addItem(code, code)
@@ -49,7 +49,7 @@ class SettingsPage(BasePage):
 
         # -- storage ------------------------------------------------------
         storage = Card()
-        storage.body().addWidget(_title("Data"))
+        storage.body().addWidget(title_label("Данные"))
         self.path_label = QLabel()
         self.path_label.setWordWrap(True)
         self.path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -61,12 +61,12 @@ class SettingsPage(BasePage):
         storage.body().addWidget(self.counts_label)
 
         buttons = QHBoxLayout()
-        backup = QPushButton("Back up now")
+        backup = QPushButton("Создать копию")
         backup.setObjectName("Primary")
         backup.clicked.connect(self._backup)
-        restore = QPushButton("Restore from file\u2026")
+        restore = QPushButton("Восстановить из файла\u2026")
         restore.clicked.connect(self._restore)
-        open_folder = QPushButton("Open data folder")
+        open_folder = QPushButton("Открыть папку данных")
         open_folder.setObjectName("Ghost")
         open_folder.clicked.connect(self._open_folder)
         buttons.addWidget(backup)
@@ -82,13 +82,13 @@ class SettingsPage(BasePage):
 
         # -- export --------------------------------------------------------
         export = Card()
-        export.body().addWidget(_title("Export"))
+        export.body().addWidget(title_label("Экспорт"))
         export_row = QHBoxLayout()
-        csv_button = QPushButton("Export transactions (CSV)")
+        csv_button = QPushButton("Операции в CSV")
         csv_button.clicked.connect(self._export_csv)
-        json_button = QPushButton("Export everything (JSON)")
+        json_button = QPushButton("Все данные в JSON")
         json_button.clicked.connect(self._export_json)
-        all_csv = QPushButton("Export every table (CSV folder)")
+        all_csv = QPushButton("Все таблицы в CSV (папка)")
         all_csv.clicked.connect(self._export_all_csv)
         export_row.addWidget(csv_button)
         export_row.addWidget(json_button)
@@ -99,15 +99,15 @@ class SettingsPage(BasePage):
 
         # -- danger zone -----------------------------------------------------
         danger = Card()
-        danger.body().addWidget(_title("Danger zone"))
+        danger.body().addWidget(title_label("Опасная зона"))
         note = QLabel(
-            "Erasing removes every account, transaction, course, registry and "
-            "note from this database. Take a backup first."
+            "Удаление сотрёт из базы все счета, операции, курсы, таблицы и "
+            "заметки. Сначала сделайте резервную копию."
         )
         note.setObjectName("Muted")
         note.setWordWrap(True)
         danger.body().addWidget(note)
-        wipe = QPushButton("Erase all data")
+        wipe = QPushButton("Удалить все данные")
         wipe.setObjectName("Danger")
         wipe.clicked.connect(self._wipe)
         danger_row = QHBoxLayout()
@@ -118,11 +118,11 @@ class SettingsPage(BasePage):
 
         # -- about ------------------------------------------------------------
         about = Card()
-        about.body().addWidget(_title("About"))
+        about.body().addWidget(title_label("О программе"))
         about_label = QLabel(
             f"{APP_NAME} {__version__}\n"
-            "A local desktop application for personal record keeping. "
-            "All data stays on this computer in a single SQLite file."
+            f"{terms.APP_TAGLINE}. "
+            "Все данные хранятся на этом компьютере в одном файле SQLite."
         )
         about_label.setObjectName("Muted")
         about_label.setWordWrap(True)
@@ -142,8 +142,8 @@ class SettingsPage(BasePage):
         self.app.currency = self.currency_combo.currentData()
         show_info(
             self,
-            "Currency updated. Amounts are shown in the new currency; "
-            "existing values are not converted.",
+            "Валюта изменена. Суммы показываются в новой валюте; "
+            "уже введённые значения не пересчитываются.",
         )
         window = self.window()
         if hasattr(window, "refresh_current_page"):
@@ -154,22 +154,22 @@ class SettingsPage(BasePage):
         try:
             path = self.app.backup()
         except Exception as exc:  # noqa: BLE001 - report any failure to user
-            show_error(self, f"Backup failed: {exc}")
+            show_error(self, f"Не удалось создать копию: {exc}")
             return
-        show_info(self, f"Backup written to:\n{path}")
+        show_info(self, f"Копия сохранена:\n{path}")
         self.refresh()
 
     def _restore(self):
         path, _ = QFileDialog.getOpenFileName(
-            self, "Choose a backup", str(self.app.backup_dir),
-            "Database files (*.db);;All files (*)",
+            self, "Выберите резервную копию", str(self.app.backup_dir),
+            "Файлы базы (*.db);;Все файлы (*)",
         )
         if not path:
             return
         if not confirm(
             self,
-            "Replace the current database with this backup? "
-            "Unsaved changes to the current data will be lost.",
+            "Заменить текущую базу этой копией? "
+            "Несохранённые изменения будут потеряны.",
         ):
             return
         try:
@@ -177,7 +177,7 @@ class SettingsPage(BasePage):
         except AppError as exc:
             show_error(self, str(exc))
             return
-        show_info(self, "Backup restored.")
+        show_info(self, "Копия восстановлена.")
         window = self.window()
         if hasattr(window, "apply_theme"):
             window.apply_theme(self.app.theme)
@@ -198,47 +198,47 @@ class SettingsPage(BasePage):
             else:
                 subprocess.Popen(["xdg-open", path])
         except Exception as exc:  # noqa: BLE001
-            show_error(self, f"Could not open the folder: {exc}\n\n{path}")
+            show_error(self, f"Не удалось открыть папку: {exc}\n\n{path}")
 
     # -- exports -----------------------------------------------------------
     def _export_csv(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export transactions", "transactions.csv", "CSV (*.csv)"
+            self, "Экспорт операций", "transactions.csv", "CSV (*.csv)"
         )
         if not path:
             return
         count = self.app.export_transactions_csv(path)
-        show_info(self, f"Exported {count} transactions to:\n{path}")
+        show_info(self, f"Экспортировано операций: {count}\n{path}")
 
     def _export_json(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export everything", "glassy-ledger.json", "JSON (*.json)"
+            self, "Экспорт всех данных", "glassy-ledger.json", "JSON (*.json)"
         )
         if not path:
             return
         self.app.export_all_json(path)
-        show_info(self, f"Full export written to:\n{path}")
+        show_info(self, f"Полный экспорт сохранён:\n{path}")
 
     def _export_all_csv(self):
         directory = QFileDialog.getExistingDirectory(
-            self, "Choose a folder for the CSV files"
+            self, "Выберите папку для файлов CSV"
         )
         if not directory:
             return
         files = self.app.export_all_csv(directory)
-        show_info(self, f"Wrote {len(files)} files into:\n{directory}")
+        show_info(self, f"Создано файлов: {len(files)}\n{directory}")
 
     def _wipe(self):
         if not confirm(
             self,
-            "Erase ALL data? This cannot be undone. "
-            "Type-free confirmation: press Yes to continue.",
+            "Удалить ВСЕ данные? Действие необратимо. "
+            "Нажмите «Да», чтобы продолжить.",
         ):
             return
-        if not confirm(self, "Really erase everything? Last chance."):
+        if not confirm(self, "Точно удалить всё? Последнее предупреждение."):
             return
         self.app.wipe()
-        show_info(self, "All data erased.")
+        show_info(self, "Все данные удалены.")
         window = self.window()
         if hasattr(window, "refresh_current_page"):
             window.refresh_current_page()
@@ -257,7 +257,7 @@ class SettingsPage(BasePage):
             self.currency_combo.setCurrentIndex(index)
         self.currency_combo.blockSignals(False)
 
-        self.path_label.setText(f"Database: {self.app.database_path}")
+        self.path_label.setText(f"База данных: {self.app.database_path}")
         counts = self.app.counts()
         self.counts_label.setText(
             "  \u00b7  ".join(f"{name}: {value}" for name, value in counts.items())
@@ -266,11 +266,11 @@ class SettingsPage(BasePage):
         clear_layout(self.backups_box)
         backups = self.app.list_backups()
         if not backups:
-            label = QLabel("No backups yet.")
+            label = QLabel("Резервных копий пока нет.")
             label.setObjectName("Muted")
             self.backups_box.addWidget(label)
             return
-        label = QLabel(f"Recent backups ({len(backups)}):")
+        label = QLabel(f"Недавние копии ({len(backups)}):")
         label.setObjectName("Muted")
         self.backups_box.addWidget(label)
         for path in backups[:5]:
@@ -279,9 +279,9 @@ class SettingsPage(BasePage):
             line.setContentsMargins(0, 0, 0, 0)
             name = QLabel(path.name)
             name.setObjectName("Muted")
-            size = QLabel(f"{path.stat().st_size / 1024:.0f} KB")
+            size = QLabel(f"{path.stat().st_size / 1024:.0f} КБ")
             size.setObjectName("Muted")
-            restore = QPushButton("Restore")
+            restore = QPushButton("Восстановить")
             restore.setObjectName("Ghost")
             restore.clicked.connect(
                 lambda _, p=path: self._restore_specific(p)
@@ -292,21 +292,16 @@ class SettingsPage(BasePage):
             self.backups_box.addWidget(row)
 
     def _restore_specific(self, path):
-        if not confirm(self, f"Restore from {path.name}?"):
+        if not confirm(self, f"Восстановить из {path.name}?"):
             return
         try:
             self.app.restore(path)
         except AppError as exc:
             show_error(self, str(exc))
             return
-        show_info(self, "Backup restored.")
+        show_info(self, "Копия восстановлена.")
         window = self.window()
         if hasattr(window, "apply_theme"):
             window.apply_theme(self.app.theme)
         self.refresh()
 
-
-def _title(text):
-    label = QLabel(text)
-    label.setObjectName("SectionTitle")
-    return label

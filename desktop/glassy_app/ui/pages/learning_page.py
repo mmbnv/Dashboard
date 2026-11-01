@@ -21,24 +21,19 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ... import terms
 from ...core import money
 from ...core.errors import AppError
 from ..base_page import BasePage
 from ..dialogs import confirm, show_error, show_info
-from ..widgets.common import BarChart, SectionHeader, StatCard
+from ..widgets.common import BarChart, SectionHeader, StatCard, wrap
 
-STATUS_LABELS = {
-    "planned": "Planned",
-    "active": "Active",
-    "paused": "Paused",
-    "done": "Done",
-    "dropped": "Dropped",
-}
+STATUS_LABELS = terms.COURSE_STATUSES
 
 
 class LearningPage(BasePage):
-    title = "Learning"
-    subtitle = "Courses, progress and study time"
+    title = terms.SECTION_TITLES["learning"]
+    subtitle = terms.SECTION_SUBTITLES["learning"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
@@ -48,21 +43,21 @@ class LearningPage(BasePage):
         self.kpi_row.setSpacing(12)
         self.kpi = {}
         for key, label in (
-            ("courses", "Courses"),
-            ("active", "Active"),
-            ("hours", "Study time"),
-            ("spend", "Spent on learning"),
+            ("courses", "Курсов"),
+            ("active", "В процессе"),
+            ("hours", "Время занятий"),
+            ("spend", "Потрачено на обучение"),
         ):
             card = StatCard(label)
             self.kpi[key] = card
             self.kpi_row.addWidget(card)
-        self.add(_wrap(self.kpi_row))
+        self.add(wrap(self.kpi_row))
 
         self.chart_card = BarChart()
         self.weekly = BarChart()
         self.tabs = QTabWidget()
-        self.tabs.addTab(self._build_courses_tab(), "Courses")
-        self.tabs.addTab(self._build_sessions_tab(), "Study log")
+        self.tabs.addTab(self._build_courses_tab(), "Курсы")
+        self.tabs.addTab(self._build_sessions_tab(), "Журнал занятий")
         self.tabs.currentChanged.connect(lambda _: self.refresh())
         self.add(self.tabs)
 
@@ -74,14 +69,14 @@ class LearningPage(BasePage):
         layout.setSpacing(10)
 
         row = QHBoxLayout()
-        add = QPushButton("Add course")
+        add = QPushButton("Добавить курс")
         add.setObjectName("Primary")
         add.clicked.connect(self._add_course)
-        log = QPushButton("Log study session")
+        log = QPushButton("Записать занятие")
         log.clicked.connect(self._log_session)
-        edit = QPushButton("Edit selected")
+        edit = QPushButton("Изменить")
         edit.clicked.connect(self._edit_course)
-        delete = QPushButton("Delete selected")
+        delete = QPushButton("Удалить")
         delete.setObjectName("Danger")
         delete.clicked.connect(self._delete_course)
         row.addWidget(add)
@@ -93,8 +88,8 @@ class LearningPage(BasePage):
 
         self.courses_table = QTableWidget(0, 8)
         self.courses_table.setHorizontalHeaderLabels(
-            ["Title", "Provider", "Status", "Progress", "Units",
-             "Hours", "Sessions", "Cost"]
+            ["Название", "Источник", "Статус", "Прогресс", "Единиц",
+             "Часов", "Занятий", "Стоимость"]
         )
         self.courses_table.setAlternatingRowColors(True)
         self.courses_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -106,7 +101,7 @@ class LearningPage(BasePage):
         self.courses_table.doubleClicked.connect(self._edit_course)
         layout.addWidget(self.courses_table, 1)
 
-        chart_label = QLabel("Study time by week (minutes)")
+        chart_label = QLabel("Время занятий по неделям (минуты)")
         chart_label.setObjectName("SectionTitle")
         layout.addWidget(chart_label)
         layout.addWidget(self.weekly)
@@ -138,7 +133,7 @@ class LearningPage(BasePage):
             [row["week"][-2:] for row in weekly],
             [row["minutes"] for row in weekly],
             [],
-            "Minutes", "",
+            "Минуты", "",
         )
 
     def _selected_course_id(self):
@@ -155,7 +150,7 @@ class LearningPage(BasePage):
     def _edit_course(self):
         course_id = self._selected_course_id()
         if not course_id:
-            show_info(self, "Select a course first.")
+            show_info(self, "Сначала выберите курс.")
             return
         if CourseDialog(self.app, self, course_id).exec() == QDialog.Accepted:
             self.refresh()
@@ -163,16 +158,16 @@ class LearningPage(BasePage):
     def _delete_course(self):
         course_id = self._selected_course_id()
         if not course_id:
-            show_info(self, "Select a course first.")
+            show_info(self, "Сначала выберите курс.")
             return
-        if confirm(self, "Delete this course and all its study sessions?"):
+        if confirm(self, "Удалить курс и все его занятия?"):
             self.app.learning.delete_course(course_id)
             self.refresh()
 
     def _log_session(self):
         course_id = self._selected_course_id()
         if not course_id:
-            show_info(self, "Select a course first.")
+            show_info(self, "Сначала выберите курс.")
             return
         if SessionDialog(self.app, self, course_id).exec() == QDialog.Accepted:
             self.refresh()
@@ -185,7 +180,7 @@ class LearningPage(BasePage):
         layout.setSpacing(10)
 
         row = QHBoxLayout()
-        remove = QPushButton("Delete selected session")
+        remove = QPushButton("Удалить занятие")
         remove.setObjectName("Danger")
         remove.clicked.connect(self._delete_session)
         row.addWidget(remove)
@@ -194,7 +189,7 @@ class LearningPage(BasePage):
 
         self.sessions_table = QTableWidget(0, 5)
         self.sessions_table.setHorizontalHeaderLabels(
-            ["Date", "Course", "Minutes", "Units", "Note"]
+            ["Дата", "Курс", "Минуты", "Единиц", "Заметка"]
         )
         self.sessions_table.setAlternatingRowColors(True)
         self.sessions_table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -226,10 +221,10 @@ class LearningPage(BasePage):
     def _delete_session(self):
         row = self.sessions_table.currentRow()
         if row < 0:
-            show_info(self, "Select a session first.")
+            show_info(self, "Сначала выберите занятие.")
             return
         session_id = self.sessions_table.item(row, 0).data(Qt.UserRole)
-        if confirm(self, "Delete this study session?"):
+        if confirm(self, "Удалить это занятие?"):
             self.app.learning.delete_session(session_id)
             self.refresh()
 
@@ -241,7 +236,7 @@ class LearningPage(BasePage):
         self.kpi["courses"].set_value(str(totals["courses"]))
         self.kpi["active"].set_value(str(totals["active"]))
         self.kpi["hours"].set_value(
-            f"{totals['hours']} h", hint=f"{totals['total_minutes']} minutes logged"
+            f"{totals['hours']} ч", hint=f"минут: {totals['total_minutes']}"
         )
         self.kpi["spend"].set_value(
             money.format_amount(totals["spend_minor"], self.app.currency)
@@ -253,52 +248,52 @@ class CourseDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.course_id = course_id
-        self.setWindowTitle("Edit course" if course_id else "New course")
+        self.setWindowTitle("Изменить курс" if course_id else "Новый курс")
         self.setMinimumWidth(440)
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
         self.title_input = QLineEdit()
-        form.addRow("Title", self.title_input)
+        form.addRow("Название", self.title_input)
 
         self.provider = QLineEdit()
-        form.addRow("Provider", self.provider)
+        form.addRow("Источник", self.provider)
 
         self.url = QLineEdit()
-        form.addRow("Link", self.url)
+        form.addRow("Ссылка", self.url)
 
         self.status = QComboBox()
         for value in ("planned", "active", "paused", "done", "dropped"):
             self.status.addItem(STATUS_LABELS[value], value)
         self.status.setCurrentIndex(1)
-        form.addRow("Status", self.status)
+        form.addRow("Статус", self.status)
 
         self.total_units = QSpinBox()
         self.total_units.setRange(0, 100000)
-        form.addRow("Total units", self.total_units)
+        form.addRow("Всего единиц", self.total_units)
 
         self.done_units = QSpinBox()
         self.done_units.setRange(0, 100000)
-        form.addRow("Completed units", self.done_units)
+        form.addRow("Пройдено единиц", self.done_units)
 
         self.cost = QLineEdit("0")
-        form.addRow("Cost", self.cost)
+        form.addRow("Стоимость", self.cost)
 
         self.started = QDateEdit()
         self.started.setCalendarPopup(True)
-        self.started.setDisplayFormat("yyyy-MM-dd")
+        self.started.setDisplayFormat("dd.MM.yyyy")
         self.started.setSpecialValueText("\u2014")
         self.started.setDate(QDate.currentDate())
-        form.addRow("Started", self.started)
+        form.addRow("Начало", self.started)
 
         self.rating = QSpinBox()
         self.rating.setRange(0, 5)
-        form.addRow("Rating (0\u20135)", self.rating)
+        form.addRow("Оценка (0\u20135)", self.rating)
 
         self.note = QTextEdit()
         self.note.setFixedHeight(70)
-        form.addRow("Notes", self.note)
+        form.addRow("Заметки", self.note)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -355,7 +350,7 @@ class SessionDialog(QDialog):
     def __init__(self, app, parent=None, course_id=None):
         super().__init__(parent)
         self.app = app
-        self.setWindowTitle("Log study session")
+        self.setWindowTitle("Записать занятие")
         self.setMinimumWidth(380)
 
         layout = QVBoxLayout(self)
@@ -368,25 +363,25 @@ class SessionDialog(QDialog):
             index = self.course.findData(course_id)
             if index >= 0:
                 self.course.setCurrentIndex(index)
-        form.addRow("Course", self.course)
+        form.addRow("Курс", self.course)
 
         self.minutes = QSpinBox()
         self.minutes.setRange(0, 100000)
         self.minutes.setValue(30)
-        form.addRow("Minutes", self.minutes)
+        form.addRow("Минуты", self.minutes)
 
         self.units = QSpinBox()
         self.units.setRange(0, 100000)
-        form.addRow("Units completed", self.units)
+        form.addRow("Пройдено единиц", self.units)
 
         self.occurred = QDateEdit()
         self.occurred.setCalendarPopup(True)
-        self.occurred.setDisplayFormat("yyyy-MM-dd")
+        self.occurred.setDisplayFormat("dd.MM.yyyy")
         self.occurred.setDate(QDate.currentDate())
-        form.addRow("Date", self.occurred)
+        form.addRow("Дата", self.occurred)
 
         self.note = QLineEdit()
-        form.addRow("Note", self.note)
+        form.addRow("Заметка", self.note)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -410,8 +405,3 @@ class SessionDialog(QDialog):
             return
         self.accept()
 
-
-def _wrap(layout):
-    widget = QWidget()
-    widget.setLayout(layout)
-    return widget

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QSplitter,
 )
 
+from ... import terms
 from ...core.errors import AppError
 from ..base_page import BasePage
 from ..dialogs import confirm, show_error, show_info
@@ -22,12 +23,12 @@ KINDS = ["note", "journal", "checklist", "reference", "idea"]
 
 
 class WorkbookPage(BasePage):
-    title = "Workbook"
-    subtitle = "Notes, journals and reference pages"
+    title = terms.SECTION_TITLES["workbook"]
+    subtitle = terms.SECTION_SUBTITLES["workbook"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
-        new_button = QPushButton("New entry")
+        new_button = QPushButton("Новая запись")
         new_button.setObjectName("Primary")
         new_button.clicked.connect(self._new_entry)
         self.header.add_action(new_button)
@@ -43,15 +44,15 @@ class WorkbookPage(BasePage):
         left = Card(padding=12)
         search_row = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search\u2026")
+        self.search.setPlaceholderText("Поиск\u2026")
         self.search.textChanged.connect(self._load_list)
         search_row.addWidget(self.search, 1)
         left.body().addLayout(search_row)
 
         self.kind_filter = QComboBox()
-        self.kind_filter.addItem("All kinds", None)
+        self.kind_filter.addItem("Все виды", None)
         for kind in KINDS:
-            self.kind_filter.addItem(kind.capitalize(), kind)
+            self.kind_filter.addItem(terms.label(terms.ENTRY_KINDS, kind), kind)
         self.kind_filter.currentIndexChanged.connect(self._load_list)
         left.body().addWidget(self.kind_filter)
 
@@ -60,10 +61,10 @@ class WorkbookPage(BasePage):
         left.body().addWidget(self.entry_list, 1)
 
         list_actions = QHBoxLayout()
-        pin = QPushButton("Pin / unpin")
+        pin = QPushButton("Закрепить / снять")
         pin.setObjectName("Ghost")
         pin.clicked.connect(self._toggle_pin)
-        delete = QPushButton("Delete")
+        delete = QPushButton("Удалить")
         delete.setObjectName("Danger")
         delete.clicked.connect(self._delete)
         list_actions.addWidget(pin)
@@ -74,31 +75,31 @@ class WorkbookPage(BasePage):
         # -- editor -------------------------------------------------------
         right = Card(padding=16)
         self.title_input = QLineEdit()
-        self.title_input.setPlaceholderText("Title")
+        self.title_input.setPlaceholderText("Заголовок")
         self.title_input.setStyleSheet("font-size: 17px; font-weight: 600;")
         right.body().addWidget(self.title_input)
 
         meta_row = QHBoxLayout()
         self.kind_input = QComboBox()
         for kind in KINDS:
-            self.kind_input.addItem(kind.capitalize(), kind)
+            self.kind_input.addItem(terms.label(terms.ENTRY_KINDS, kind), kind)
         self.tags_input = QLineEdit()
-        self.tags_input.setPlaceholderText("tags, comma separated")
-        meta_row.addWidget(QLabel("Kind"))
+        self.tags_input.setPlaceholderText("метки через запятую")
+        meta_row.addWidget(QLabel("Вид"))
         meta_row.addWidget(self.kind_input)
-        meta_row.addWidget(QLabel("Tags"))
+        meta_row.addWidget(QLabel("Метки"))
         meta_row.addWidget(self.tags_input, 1)
         right.body().addLayout(meta_row)
 
         self.body_edit = QPlainTextEdit()
-        self.body_edit.setPlaceholderText("Write here\u2026")
+        self.body_edit.setPlaceholderText("Пишите здесь\u2026")
         right.body().addWidget(self.body_edit, 1)
 
         actions = QHBoxLayout()
-        save = QPushButton("Save")
+        save = QPushButton("Сохранить")
         save.setObjectName("Primary")
         save.clicked.connect(self._save)
-        revert = QPushButton("Revert")
+        revert = QPushButton("Отменить")
         revert.setObjectName("Ghost")
         revert.clicked.connect(self._on_select_current)
         actions.addWidget(save)
@@ -132,7 +133,7 @@ class WorkbookPage(BasePage):
             item.setData(Qt.UserRole, entry["id"])
             self.entry_list.addItem(item)
         self.entry_list.blockSignals(False)
-        self.count_label.setText(f"{len(entries)} entries")
+        self.count_label.setText(f"записей: {len(entries)}")
 
         if previous:
             for row in range(self.entry_list.count()):
@@ -155,7 +156,7 @@ class WorkbookPage(BasePage):
         index = self.kind_input.findData(entry["kind"])
         if index >= 0:
             self.kind_input.setCurrentIndex(index)
-        self.status.setText(f"Updated {entry['updated_at'][:16]}")
+        self.status.setText(f"Обновлено {entry['updated_at'][:16]}")
 
     def _on_select_current(self):
         if self.current_id:
@@ -163,7 +164,7 @@ class WorkbookPage(BasePage):
             self.title_input.setText(entry["title"])
             self.body_edit.setPlainText(entry["body"])
             self.tags_input.setText(entry["tags"])
-            self.status.setText("Reverted")
+            self.status.setText("Изменения отменены")
 
     def _clear_editor(self):
         self.current_id = None
@@ -177,12 +178,12 @@ class WorkbookPage(BasePage):
         self.entry_list.setCurrentItem(None)
         self._clear_editor()
         self.title_input.setFocus()
-        self.status.setText("New entry \u2014 press Save to store it")
+        self.status.setText("Новая запись — нажмите «Сохранить»")
 
     def _save(self):
         title = self.title_input.text().strip()
         if not title:
-            show_info(self, "Give the entry a title before saving.")
+            show_info(self, "Перед сохранением укажите заголовок.")
             return
         payload = dict(
             title=title,
@@ -196,11 +197,11 @@ class WorkbookPage(BasePage):
                 self.app.workbook.update_entry(
                     self.current_id, pinned=bool(existing["pinned"]), **payload
                 )
-                self.status.setText("Saved")
+                self.status.setText("Сохранено")
             else:
                 new_id = self.app.workbook.create_entry(**payload)
                 self.current_id = new_id
-                self.status.setText("Created")
+                self.status.setText("Создано")
         except AppError as exc:
             show_error(self, str(exc))
             return
@@ -208,16 +209,16 @@ class WorkbookPage(BasePage):
 
     def _toggle_pin(self):
         if not self.current_id:
-            show_info(self, "Select an entry first.")
+            show_info(self, "Сначала выберите запись.")
             return
         self.app.workbook.toggle_pin(self.current_id)
         self._load_list()
 
     def _delete(self):
         if not self.current_id:
-            show_info(self, "Select an entry first.")
+            show_info(self, "Сначала выберите запись.")
             return
-        if not confirm(self, "Delete this entry?"):
+        if not confirm(self, "Удалить эту запись?"):
             return
         self.app.workbook.delete_entry(self.current_id)
         self.current_id = None

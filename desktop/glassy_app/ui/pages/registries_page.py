@@ -29,20 +29,21 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from ... import terms
 from ...core.errors import AppError
 from ...services.registries import BUILTIN_TEMPLATES
 from ..base_page import BasePage
 from ..dialogs import confirm, show_error, show_info
-from ..widgets.common import Card, SectionHeader
+from ..widgets.common import Card, SectionHeader, title_label
 
 
 class RegistriesPage(BasePage):
-    title = "Registries"
-    subtitle = "Your own tables for any kind of data"
+    title = terms.SECTION_TITLES["registries"]
+    subtitle = terms.SECTION_SUBTITLES["registries"]
 
     def build(self):
         self.header = SectionHeader(self.title, self.subtitle)
-        new_button = QPushButton("New registry")
+        new_button = QPushButton("Новая таблица")
         new_button.setObjectName("Primary")
         new_button.clicked.connect(self._new_registry)
         self.header.add_action(new_button)
@@ -52,16 +53,16 @@ class RegistriesPage(BasePage):
 
         # -- left: registry list ----------------------------------------
         left = Card(padding=12)
-        left.body().addWidget(_title("Tables"))
+        left.body().addWidget(title_label("Таблицы"))
         self.registry_list = QListWidget()
         self.registry_list.currentItemChanged.connect(self._on_registry_selected)
         left.body().addWidget(self.registry_list, 1)
 
         left_actions = QHBoxLayout()
-        rename = QPushButton("Rename")
+        rename = QPushButton("Переименовать")
         rename.setObjectName("Ghost")
         rename.clicked.connect(self._rename_registry)
-        remove = QPushButton("Delete")
+        remove = QPushButton("Удалить")
         remove.setObjectName("Danger")
         remove.clicked.connect(self._delete_registry)
         left_actions.addWidget(rename)
@@ -71,7 +72,7 @@ class RegistriesPage(BasePage):
 
         # -- right: records ---------------------------------------------
         right = Card(padding=12)
-        self.registry_title = QLabel("Select a table")
+        self.registry_title = QLabel("Выберите таблицу")
         self.registry_title.setObjectName("SectionTitle")
         self.registry_description = QLabel("")
         self.registry_description.setObjectName("Muted")
@@ -81,29 +82,29 @@ class RegistriesPage(BasePage):
 
         controls = QHBoxLayout()
         self.search = QLineEdit()
-        self.search.setPlaceholderText("Search records\u2026")
+        self.search.setPlaceholderText("Поиск записей\u2026")
         self.search.textChanged.connect(self._load_records)
         controls.addWidget(self.search, 1)
 
-        add_record = QPushButton("Add record")
+        add_record = QPushButton("Добавить запись")
         add_record.setObjectName("Primary")
         add_record.clicked.connect(self._add_record)
         controls.addWidget(add_record)
 
-        edit_record = QPushButton("Edit")
+        edit_record = QPushButton("Изменить")
         edit_record.clicked.connect(self._edit_record)
         controls.addWidget(edit_record)
 
-        delete_record = QPushButton("Delete")
+        delete_record = QPushButton("Удалить")
         delete_record.setObjectName("Danger")
         delete_record.clicked.connect(self._delete_record)
         controls.addWidget(delete_record)
 
-        columns = QPushButton("Columns\u2026")
+        columns = QPushButton("Колонки\u2026")
         columns.clicked.connect(self._manage_columns)
         controls.addWidget(columns)
 
-        export = QPushButton("Export")
+        export = QPushButton("Экспорт")
         export.clicked.connect(self._export)
         controls.addWidget(export)
         right.body().addLayout(controls)
@@ -144,10 +145,10 @@ class RegistriesPage(BasePage):
 
         if not registries:
             self.current_registry_id = None
-            self.registry_title.setText("No tables yet")
+            self.registry_title.setText("Пока нет таблиц")
             self.registry_description.setText(
-                "Create one, or start from a template such as Inventory, "
-                "Contacts, Meter readings or Vehicle log."
+                "Создайте таблицу или возьмите шаблон: инвентарь, контакты, "
+                "показания счётчиков, журнал автомобиля."
             )
             self.records_table.setRowCount(0)
             self.records_table.setColumnCount(0)
@@ -183,7 +184,7 @@ class RegistriesPage(BasePage):
             return
         registry = self.app.registries.get_registry(self.current_registry_id)
         text, ok = QInputDialog.getText(
-            self, "Rename table", "Title", text=registry["title"]
+            self, "Переименовать таблицу", "Название", text=registry["title"]
         )
         if not ok or not text.strip():
             return
@@ -195,7 +196,7 @@ class RegistriesPage(BasePage):
     def _delete_registry(self):
         if not self.current_registry_id:
             return
-        if not confirm(self, "Delete this table and all of its records?"):
+        if not confirm(self, "Удалить таблицу и все её записи?"):
             return
         self.app.registries.delete_registry(self.current_registry_id)
         self.current_registry_id = None
@@ -213,7 +214,7 @@ class RegistriesPage(BasePage):
 
         self.records_table.setColumnCount(len(fields) + 1)
         self.records_table.setHorizontalHeaderLabels(
-            [f["label"] for f in fields] + ["Updated"]
+            [f["label"] for f in fields] + ["Обновлено"]
         )
         self.records_table.setRowCount(len(rows))
         for row_index, row in enumerate(rows):
@@ -231,11 +232,11 @@ class RegistriesPage(BasePage):
             header.setSectionResizeMode(0, QHeaderView.Stretch)
         header.setSectionResizeMode(len(fields), QHeaderView.ResizeToContents)
 
-        self.summary_label.setText(f"{len(rows)} records")
+        self.summary_label.setText(f"записей: {len(rows)}")
 
     def _add_record(self):
         if not self.current_registry_id:
-            show_info(self, "Create or select a table first.")
+            show_info(self, "Сначала создайте или выберите таблицу.")
             return
         dialog = RecordDialog(self.app, self.current_registry_id, self)
         if dialog.exec() == QDialog.Accepted:
@@ -244,7 +245,7 @@ class RegistriesPage(BasePage):
     def _edit_record(self):
         record_id = self._selected_record_id()
         if not record_id:
-            show_info(self, "Select a record first.")
+            show_info(self, "Сначала выберите запись.")
             return
         dialog = RecordDialog(
             self.app, self.current_registry_id, self, record_id=record_id
@@ -262,9 +263,9 @@ class RegistriesPage(BasePage):
     def _delete_record(self):
         record_id = self._selected_record_id()
         if not record_id:
-            show_info(self, "Select a record first.")
+            show_info(self, "Сначала выберите запись.")
             return
-        if confirm(self, "Delete this record?"):
+        if confirm(self, "Удалить эту запись?"):
             self.app.registries.delete_record(record_id)
             self.refresh(self.current_registry_id)
 
@@ -282,8 +283,8 @@ class RegistriesPage(BasePage):
         from PySide6.QtWidgets import QFileDialog
 
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export table", "registry.csv",
-            "CSV files (*.csv);;JSON files (*.json)",
+            self, "Экспорт таблицы", "registry.csv",
+            "Файлы CSV (*.csv);;Файлы JSON (*.json)",
         )
         if not path:
             return
@@ -293,43 +294,37 @@ class RegistriesPage(BasePage):
             content = self.app.registries.export_csv(self.current_registry_id)
         with open(path, "w", encoding="utf-8") as handle:
             handle.write(content)
-        show_info(self, f"Exported to:\n{path}")
+        show_info(self, f"Экспортировано в:\n{path}")
 
     def refresh(self, select_id=None):
         self._load_registries(select_id)
-
-
-def _title(text):
-    label = QLabel(text)
-    label.setObjectName("SectionTitle")
-    return label
 
 
 class NewRegistryDialog(QDialog):
     def __init__(self, app, parent=None):
         super().__init__(parent)
         self.app = app
-        self.setWindowTitle("New registry")
+        self.setWindowTitle("Новая таблица")
         self.setMinimumWidth(420)
 
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
         self.template = QComboBox()
-        self.template.addItem("Start from scratch", None)
+        self.template.addItem("С нуля", None)
         for key, spec in BUILTIN_TEMPLATES.items():
             self.template.addItem(spec["title"], key)
-        form.addRow("Template", self.template)
+        form.addRow("Шаблон", self.template)
 
         self.name = QLineEdit()
-        self.name.setPlaceholderText("short_name, letters and underscores")
-        form.addRow("Key", self.name)
+        self.name.setPlaceholderText("короткое_имя, буквы и подчёркивания")
+        form.addRow("Имя", self.name)
 
         self.title_input = QLineEdit()
-        form.addRow("Title", self.title_input)
+        form.addRow("Название", self.title_input)
 
         self.description = QLineEdit()
-        form.addRow("Description", self.description)
+        form.addRow("Описание", self.description)
 
         layout.addLayout(form)
         buttons = QDialogButtonBox(
@@ -343,7 +338,7 @@ class NewRegistryDialog(QDialog):
         template = self.template.currentData()
         name = self.name.text().strip() or (template or "")
         if not name:
-            show_error(self, "Give the table a short key, for example 'tools'.")
+            show_error(self, "Укажите короткое имя таблицы, например «tools».")
             return
         try:
             if template and not self.name.text().strip():
@@ -368,21 +363,21 @@ class ColumnsDialog(QDialog):
         super().__init__(parent)
         self.app = app
         self.registry_id = registry_id
-        self.setWindowTitle("Columns")
+        self.setWindowTitle("Колонки")
         self.setMinimumWidth(560)
         self.setMinimumHeight(420)
 
         layout = QVBoxLayout(self)
         self.table = QTableWidget(0, 4)
-        self.table.setHorizontalHeaderLabels(["Key", "Label", "Type", "Required"])
+        self.table.setHorizontalHeaderLabels(["Имя", "Подпись", "Тип", "Обязательное"])
         self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         layout.addWidget(self.table, 1)
 
         row = QHBoxLayout()
-        add = QPushButton("Add column")
+        add = QPushButton("Добавить колонку")
         add.setObjectName("Primary")
         add.clicked.connect(self._add)
-        remove = QPushButton("Remove selected")
+        remove = QPushButton("Удалить")
         remove.setObjectName("Danger")
         remove.clicked.connect(self._remove)
         row.addWidget(add)
@@ -408,7 +403,7 @@ class ColumnsDialog(QDialog):
             type_combo = QComboBox()
             for value in ("text", "number", "money", "date", "bool", "select",
                           "multiline"):
-                type_combo.addItem(value, value)
+                type_combo.addItem(terms.label(terms.FIELD_TYPES, value, value), value)
             pos = type_combo.findData(field["type"])
             if pos >= 0:
                 type_combo.setCurrentIndex(pos)
@@ -451,8 +446,8 @@ class ColumnsDialog(QDialog):
         field_id = self.table.item(row, 0).data(Qt.UserRole)
         if not confirm(
             self,
-            "Remove this column? Existing values for it stay in the database "
-            "but will no longer be shown.",
+            "Удалить колонку? Значения останутся в базе, но перестанут "
+            "показываться.",
         ):
             return
         self.app.registries.delete_field(field_id)
@@ -468,24 +463,24 @@ class ColumnsDialog(QDialog):
 class FieldDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("New column")
+        self.setWindowTitle("Новая колонка")
         self.setMinimumWidth(340)
         layout = QVBoxLayout(self)
         form = QFormLayout()
 
         self.key = QLineEdit()
-        form.addRow("Key", self.key)
+        form.addRow("Имя", self.key)
 
         self.label = QLineEdit()
-        form.addRow("Label", self.label)
+        form.addRow("Подпись", self.label)
 
         self.type = QComboBox()
         for value in ("text", "number", "money", "date", "bool", "select",
                       "multiline"):
-            self.type.addItem(value, value)
-        form.addRow("Type", self.type)
+            self.type.addItem(terms.label(terms.FIELD_TYPES, value, value), value)
+        form.addRow("Тип", self.type)
 
-        self.required = QCheckBox("Required")
+        self.required = QCheckBox("Обязательное")
         form.addRow("", self.required)
 
         layout.addLayout(form)
@@ -506,7 +501,7 @@ class RecordDialog(QDialog):
         self.registry_id = registry_id
         self.record_id = record_id
         self.widgets = {}
-        self.setWindowTitle("Edit record" if record_id else "New record")
+        self.setWindowTitle("Изменить запись" if record_id else "Новая запись")
         self.setMinimumWidth(430)
 
         registry = app.registries.get_registry(registry_id)
@@ -528,7 +523,7 @@ class RecordDialog(QDialog):
             elif field["type"] == "date":
                 widget = QDateEdit()
                 widget.setCalendarPopup(True)
-                widget.setDisplayFormat("yyyy-MM-dd")
+                widget.setDisplayFormat("dd.MM.yyyy")
                 widget.setDate(QDate.currentDate())
                 if value:
                     widget.setDate(QDate.fromString(value, "yyyy-MM-dd"))

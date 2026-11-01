@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import APP_NAME, __version__, app_icon_path
+from .. import APP_NAME, __version__, app_icon_path, terms
 from . import theme
 from .dialogs import show_error, show_info
 from .pages.calculator_page import CalculatorPage
@@ -29,16 +29,7 @@ from .pages.tasks_page import TasksPage
 from .pages.wallet_page import WalletPage
 from .pages.workbook_page import WorkbookPage
 
-NAV_ITEMS = [
-    ("dashboard", "Dashboard", "\u25a3"),
-    ("wallet", "Wallet", "\u25b0"),
-    ("tasks", "Tasks", "\u2611"),
-    ("learning", "Learning", "\u25ce"),
-    ("registries", "Registries", "\u2637"),
-    ("workbook", "Workbook", "\u270e"),
-    ("calculator", "Calculator", "\u2211"),
-    ("settings", "Settings", "\u2699"),
-]
+NAV_ITEMS = list(terms.SECTIONS)
 
 PAGE_CLASSES = {
     "dashboard": DashboardPage,
@@ -80,7 +71,7 @@ class MainWindow(QMainWindow):
 
         self.status = QStatusBar()
         self.setStatusBar(self.status)
-        self.status.showMessage("Ready")
+        self.status.showMessage("Готово")
 
         self._build_menu()
         self.apply_theme(self.app.theme)
@@ -119,37 +110,37 @@ class MainWindow(QMainWindow):
         """A native menu bar, as expected of a desktop application."""
         bar = self.menuBar()
 
-        file_menu = bar.addMenu("&File")
-        self._action(file_menu, "&New task\u2026", self._new_task,
+        file_menu = bar.addMenu("&Файл")
+        self._action(file_menu, "&Новая задача\u2026", self._new_task,
                      QKeySequence("Ctrl+N"))
-        self._action(file_menu, "&Refresh", self.refresh_current_page,
+        self._action(file_menu, "&Обновить", self.refresh_current_page,
                      QKeySequence("F5"))
         file_menu.addSeparator()
-        self._action(file_menu, "&Backup database\u2026", self._backup)
-        self._action(file_menu, "&Export all data (JSON)\u2026",
+        self._action(file_menu, "Создать &резервную копию\u2026", self._backup)
+        self._action(file_menu, "&Экспорт всех данных (JSON)\u2026",
                      self._export_json)
-        self._action(file_menu, "Export transactions (CSV)\u2026",
+        self._action(file_menu, "Экспорт операций (CSV)\u2026",
                      self._export_csv)
         file_menu.addSeparator()
-        self._action(file_menu, "&Quit", self.close,
+        self._action(file_menu, "В&ыход", self.close,
                      QKeySequence("Ctrl+Q"))
 
-        view_menu = bar.addMenu("&View")
-        self._action(view_menu, "&Dark theme", lambda: self._set_theme("dark"),
+        view_menu = bar.addMenu("&Вид")
+        self._action(view_menu, "&Тёмная тема", lambda: self._set_theme("dark"),
                      QKeySequence("Ctrl+Shift+D"))
-        self._action(view_menu, "&Light theme", lambda: self._set_theme("light"),
+        self._action(view_menu, "&Светлая тема", lambda: self._set_theme("light"),
                      QKeySequence("Ctrl+Shift+L"))
         view_menu.addSeparator()
-        self._action(view_menu, "Toggle &full screen", self._toggle_fullscreen,
+        self._action(view_menu, "Во весь &экран", self._toggle_fullscreen,
                      QKeySequence("F11"))
 
-        go_menu = bar.addMenu("&Go")
+        go_menu = bar.addMenu("&Переход")
         for index, (key, label, _) in enumerate(NAV_ITEMS, start=1):
             self._action(go_menu, label, lambda k=key: self.show_page(k),
                          QKeySequence(f"Ctrl+{index}"))
 
-        help_menu = bar.addMenu("&Help")
-        self._action(help_menu, "&About " + APP_NAME, self._about)
+        help_menu = bar.addMenu("&Справка")
+        self._action(help_menu, "&О программе", self._about)
 
     @staticmethod
     def _action(menu, text, slot, shortcut=None):
@@ -181,48 +172,48 @@ class MainWindow(QMainWindow):
         try:
             path = self.app.backup()
         except Exception as exc:  # noqa: BLE001 - report and keep running
-            show_error(self, f"Backup failed: {exc}")
+            show_error(self, f"Не удалось создать копию: {exc}")
             return
-        show_info(self, f"Backup written to\n{path}")
+        show_info(self, f"Копия сохранена:\n{path}")
 
     def _export_json(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export all data", "glassy-ledger-export.json",
-            "JSON files (*.json)",
+            self, "Экспорт всех данных", "glassy-ledger-export.json",
+            "Файлы JSON (*.json)",
         )
         if not path:
             return
         try:
             self.app.export_all_json(path)
         except Exception as exc:  # noqa: BLE001
-            show_error(self, f"Export failed: {exc}")
+            show_error(self, f"Не удалось экспортировать: {exc}")
             return
-        show_info(self, f"Exported to\n{path}")
+        show_info(self, f"Экспортировано в:\n{path}")
 
     def _export_csv(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, "Export transactions", "transactions.csv",
-            "CSV files (*.csv)",
+            self, "Экспорт операций", "transactions.csv",
+            "Файлы CSV (*.csv)",
         )
         if not path:
             return
         try:
             self.app.export_transactions_csv(path)
         except Exception as exc:  # noqa: BLE001
-            show_error(self, f"Export failed: {exc}")
+            show_error(self, f"Не удалось экспортировать: {exc}")
             return
-        show_info(self, f"Exported to\n{path}")
+        show_info(self, f"Экспортировано в:\n{path}")
 
     def _about(self):
         box = QMessageBox(self)
-        box.setWindowTitle(f"About {APP_NAME}")
+        box.setWindowTitle(f"О программе {APP_NAME}")
         box.setText(f"<h3>{APP_NAME} {__version__}</h3>"
-                    "<p>Personal record keeping for your desktop.</p>")
+                    f"<p>{terms.APP_TAGLINE}.</p>")
         box.setInformativeText(
-            "Wallet, tasks, learning, registries, workbook and calculator "
-            "in one local application.\n\n"
-            f"Database: {self.app.database_path}\n"
-            "All data stays on this computer."
+            "Кошелёк, задачи, обучение, таблицы, заметки и калькулятор "
+            "в одной программе.\n\n"
+            f"База данных: {self.app.database_path}\n"
+            "Все данные остаются на этом компьютере."
         )
         icon_file = app_icon_path()
         if icon_file:
@@ -242,7 +233,7 @@ class MainWindow(QMainWindow):
         brand = QLabel(APP_NAME)
         brand.setObjectName("Brand")
         layout.addWidget(brand)
-        sub = QLabel("personal record keeping")
+        sub = QLabel(terms.APP_TAGLINE.lower())
         sub.setObjectName("BrandSub")
         layout.addWidget(sub)
         layout.addSpacing(14)
@@ -260,7 +251,7 @@ class MainWindow(QMainWindow):
 
         layout.addStretch(1)
 
-        version = QLabel(f"v{__version__}\nLocal database")
+        version = QLabel(f"v{__version__}\nЛокальная база")
         version.setObjectName("BrandSub")
         version.setAlignment(Qt.AlignLeft)
         layout.addWidget(version)
