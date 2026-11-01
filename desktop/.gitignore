@@ -1,0 +1,7 @@
+# The root .gitignore ignores every *.spec; this one is the build recipe.
+!packaging/glassy_ledger.spec
+
+# Local build output
+build/
+dist/
+*.egg-info/
