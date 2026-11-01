@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react"
 import { database } from "../../../../../lib/globalState";
 import AskCity from "./readCity";
 import CursorImg from '../../../../../assets/cursor.png';
-import windGif from '../../../../../assets/WindGif.gif';
 
 export default function WeatherCard() {
     const myData = database(stat=> stat.db?.weatherWid);
@@ -10,7 +9,6 @@ export default function WeatherCard() {
     let [weatherData,setData] = useState({});
 
     const featchWeather = async (city, api_key) => {
-        if (Object.keys(weatherData).length !== 0) return;
         let rqst = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${api_key}&units=metric`)
         let data = await rqst.json();
         // console.log(data)
@@ -19,13 +17,13 @@ export default function WeatherCard() {
 
 
     useEffect(() => {
-        if (!myData.city || Object.keys(weatherData).length !== 0) return;
+        if (!myData.city) return;
+        if (Object.keys(weatherData).length !== 0) return;
 
         const { city, apiKey } = myData;
 
-            featchWeather(city, apiKey);
-
-        return () => clearInterval(interval);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- async weather fetch
+        featchWeather(city, apiKey);
     }, [myData, weatherData]);
 
     const getDirection = () => {

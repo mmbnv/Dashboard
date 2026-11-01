@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 
 
 export default function DigitalClock() {
-  let isCalled = false
   const secondsRef = useRef(null);
   const minutesRef = useRef(null);
   const minuteRef = useRef(null);
@@ -10,6 +9,7 @@ export default function DigitalClock() {
   const dateRef = useRef(null)
 
   useEffect(() => {
+    let isCalled = false
     const seconds = secondsRef.current;
     const minutes = minutesRef.current;
     const minute = minuteRef.current;

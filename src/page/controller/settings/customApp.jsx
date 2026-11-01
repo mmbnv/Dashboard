@@ -1,4 +1,3 @@
-import { data, input, pre } from "framer-motion/client";
 import { useEffect, useState } from "react"
 import { toast } from "react-toastify";
 

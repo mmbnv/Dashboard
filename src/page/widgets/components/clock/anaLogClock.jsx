@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
 export default function AnalogClock() {
-    let isCalled = false;
     const [dateObj,setDate] = useState({}); 
     const secondRef = useRef(null);
     const minuteRef = useRef(null);
     const hourRef = useRef(null);
 
 useEffect(() => {
+    let isCalled = false;
 
     const handleTime = () => {
         if(!secondRef.current || !minuteRef.current || !hourRef.current) return;

@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { database, useTabToggle } from "../lib/globalState"
 import BackGround from "./background/backgroundMgmt";
 import Controller from "./controller/mainController";

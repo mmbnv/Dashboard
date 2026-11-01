@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "app": "vite build && vite preview",
+    "lint": "eslint ."
   },
   "dependencies": {
     "framer-motion": "^12.35.2",
@@ -33,5 +34,6 @@
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
     "vite": "^7.3.1"
-  }
+  },
+  "description": "A glassmorphism dashboard with tasks, notes, bookmarks and weather. Runs as a Chrome/Edge New Tab extension or as a standalone installable web app (PWA)."
 }

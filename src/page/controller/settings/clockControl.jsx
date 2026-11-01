@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { database } from "../../../lib/globalState"
-import { toast } from "react-toastify";
-import { pre } from "framer-motion/client";
 
 export default function ClockCotroll ({crntData}) {
     let {setDB} = database();

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { database, useTabToggle } from "../../../lib/globalState"
+import { getTopSites, recordVisit } from "../../../lib/platform"
 
 export default function AllAps() {
     const quickAc = database(stat=> stat.db.quickAcces || []);
@@ -8,33 +9,17 @@ export default function AllAps() {
     const [frequentlyArr, setArr] = useState([]);
 
     const handleClick = url => {
-        window.location.href=url;
+        recordVisit(url);
+        window.location.assign(url);
     }
 
-    const getWebsiteName = (url) => {
-        const hostname = new URL(url).hostname.replace(/^www\./, "")
-        .split(".")[0];
-
-        return hostname.charAt(0).toUpperCase() + hostname.slice(1)
-        
-    };
-
     const fetchTopSites = async () => {
-        let topSite = await chrome.topSites.get();
-        let tempArr = []
-        topSite.slice(0, 3).forEach(obj => {
-            let tempObj = {
-                name:getWebsiteName(obj.url),
-                url:obj.url
-            }
-            tempArr.push(tempObj);
-        });
-        setArr(tempArr);
-        console.log(tempArr);
+        setArr(await getTopSites(3));
     }
 
     useEffect(()=>{
         if (isFrequently) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- async top-sites load
             fetchTopSites();
         }
     },[isFrequently]);
