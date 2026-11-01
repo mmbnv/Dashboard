@@ -70,3 +70,27 @@ there with a web fallback rather than branching on `chrome` inside components.
   on a dark backdrop, making text unreadable.
 - The radial toolbar places buttons with `--i` and `--step` (`72deg` for 5 buttons);
   change `--step` when the number of toolbar items changes.
+
+## Native desktop application (`desktop/`)
+
+`desktop/` holds **Glassy Ledger**, a PySide6 (Qt 6) desktop app — separate from the
+browser extension in `src/`. It is the intended deliverable: a real Windows program,
+not a web page in a shell.
+
+- Layout: `glassy_app/{core,repositories,services,ui}`, one service per module.
+  UI never touches SQL; pages call `self.app.<service>`.
+- Run from source: `cd desktop && python -m glassy_app`. On headless Linux use
+  `xvfb-run -a` or `DISPLAY=:99`.
+- Build the exe: `pyinstaller packaging/glassy_ledger.spec --noconfirm`
+  (one-folder by default; `GLASSY_ONE_FILE=1` for a single file).
+- Tests: `DISPLAY=:99 python -m pytest tests -q` (134 tests). GUI tests drive real
+  widgets, not mocks, and skip without a display. `tools/gui_smoke.py` screenshots
+  every page and performs a real write.
+- The root `.gitignore` ignores `*.spec`; `desktop/.gitignore` re-includes
+  `packaging/glassy_ledger.spec`. Keep that negation or the build recipe is lost.
+- Data directory: `GLASSY_LEDGER_HOME`, else `%APPDATA%\GlassyLedger` on Windows or
+  `~/.local/share/glassy-ledger` on Linux. `Application.close()` is idempotent —
+  `closeEvent` runs after tests may have closed the app already.
+- Qt falls back to the platform palette for widgets the stylesheet does not name;
+  new containers need an `objectName` covered by `ui/theme.py` or they render white
+  behind the dark cards (see `test_page_background_follows_the_theme`).
